@@ -8,7 +8,7 @@
     card_view:cardElevation="4dp">
 
     <TextView
-        android:id="@+id/cardTitle"
+        android:id="@+id/etCardTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="12dp"

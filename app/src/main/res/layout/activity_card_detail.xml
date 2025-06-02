@@ -10,14 +10,16 @@
         android:orientation="vertical">
 
         <!-- Tiêu đề thẻ -->
-        <TextView
-            android:id="@+id/tvCardTitle"
+        <EditText
+            android:id="@+id/etCardTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Card Title"
+            android:hint="Tiêu đề thẻ"
             android:textSize="24sp"
             android:textStyle="bold"
-            android:paddingBottom="8dp" />
+            android:paddingBottom="8dp"
+            android:inputType="text"
+            android:background="@android:drawable/edit_text" />
 
         <!-- Mô tả -->
         <TextView
@@ -112,6 +114,17 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Thêm tệp đính kèm"
+            android:padding="8dp" />
+
+        <!-- Nút Lưu -->
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="16dp"
+            android:text="Lưu"
+            android:background="@drawable/rounded_save_button"
             android:padding="8dp" />
 
     </LinearLayout>

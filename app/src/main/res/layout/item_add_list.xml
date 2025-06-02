@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:text="➕ Thêm nhóm"
         android:textColor="#FFFFFF"
-        android:background="@drawable/rounded_button_background"
+        android:background="@drawable/rounded_add_button"
         android:layout_marginTop="20dp"
         tools:ignore="HardcodedText" />
 

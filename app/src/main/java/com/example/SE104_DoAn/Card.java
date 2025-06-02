@@ -1,11 +1,13 @@
 package com.example.SE104_DoAn;
 
-import java.io.Serializable;
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class Card implements Serializable {
+public class Card implements Parcelable {
     private String title;
     private String description;
     private List<String> members;
@@ -20,6 +22,44 @@ public class Card implements Serializable {
         this.startDate = null;
         this.endDate = null;
         this.attachments = new ArrayList<>();
+    }
+
+    protected Card(Parcel in) {
+        title = in.readString();
+        description = in.readString();
+        members = in.createStringArrayList();
+        long startDateLong = in.readLong();
+        startDate = startDateLong == -1 ? null : new Date(startDateLong);
+        long endDateLong = in.readLong();
+        endDate = endDateLong == -1 ? null : new Date(endDateLong);
+        attachments = in.createStringArrayList();
+    }
+
+    public static final Creator<Card> CREATOR = new Creator<Card>() {
+        @Override
+        public Card createFromParcel(Parcel in) {
+            return new Card(in);
+        }
+
+        @Override
+        public Card[] newArray(int size) {
+            return new Card[size];
+        }
+    };
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(title);
+        dest.writeString(description);
+        dest.writeStringList(members);
+        dest.writeLong(startDate != null ? startDate.getTime() : -1);
+        dest.writeLong(endDate != null ? endDate.getTime() : -1);
+        dest.writeStringList(attachments);
     }
 
     public String getTitle() {

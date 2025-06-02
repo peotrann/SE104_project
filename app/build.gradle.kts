@@ -39,6 +39,8 @@ dependencies {
     implementation(libs.cardview)
     implementation(libs.navigation.fragment)
     implementation(libs.navigation.ui)
+    implementation(libs.lifecycle.viewmodel)
+    implementation(libs.lifecycle.livedata)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

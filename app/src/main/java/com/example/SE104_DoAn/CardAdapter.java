@@ -1,63 +1,58 @@
 package com.example.SE104_DoAn;
 
-import android.content.Context;
-import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
 import java.util.List;
+import java.util.function.BiConsumer;
 
 public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder> {
-    private List<Card> cardList;
-    private Context context;
 
-    public CardAdapter(List<Card> cardList, Context context) {
-        this.cardList = cardList;
-        this.context = context;
+    private List<Card> cards;
+    private BiConsumer<Card, Integer> onCardClickListener;
+
+    public CardAdapter(List<Card> cards, BiConsumer<Card, Integer> onCardClickListener) {
+        this.cards = cards;
+        this.onCardClickListener = onCardClickListener;
     }
 
     @NonNull
     @Override
     public CardViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_card, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_card, parent, false);
         return new CardViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull CardViewHolder holder, int position) {
-        Card card = cardList.get(position);
-        holder.cardTitle.setText(card.getTitle());
-
-        // Khi nhấn vào thẻ, mở CardDetailActivity
+        Card card = cards.get(position);
+        holder.tvCardTitle.setText(card.getTitle());
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, CardDetailActivity.class);
-            intent.putExtra("card", card);
-            context.startActivity(intent);
-        });
-
-        // Xóa thẻ khi nhấn giữ
-        holder.itemView.setOnLongClickListener(v -> {
-            cardList.remove(position);
-            notifyItemRemoved(position);
-            return true;
+            if (onCardClickListener != null) {
+                onCardClickListener.accept(card, position);
+            }
         });
     }
 
     @Override
     public int getItemCount() {
-        return cardList.size();
+        return cards != null ? cards.size() : 0;
     }
 
     static class CardViewHolder extends RecyclerView.ViewHolder {
-        TextView cardTitle;
+        TextView tvCardTitle;
 
         public CardViewHolder(@NonNull View itemView) {
             super(itemView);
-            cardTitle = itemView.findViewById(R.id.cardTitle);
+            tvCardTitle = itemView.findViewById(R.id.etCardTitle);
+            if (tvCardTitle == null) {
+                throw new IllegalStateException("TextView with ID tvCardTitle not found in item_card.xml");
+            }
         }
     }
 }

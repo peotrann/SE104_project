@@ -7,7 +7,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
 import androidx.appcompat.app.AppCompatActivity;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -15,10 +17,17 @@ import java.util.Locale;
 
 public class CardDetailActivity extends AppCompatActivity {
 
-    private TextView tvCardTitle, tvStartDate, tvEndDate;
+    private static final int REQUEST_CODE_UPDATE_CARD = 100;
+
+    private EditText etCardTitle;
     private EditText etDescription;
-    private LinearLayout llMembers, llAttachments;
-    private Button btnAddMember, btnAddAttachment;
+    private LinearLayout llMembers;
+    private Button btnAddMember;
+    private TextView tvStartDate;
+    private TextView tvEndDate;
+    private LinearLayout llAttachments;
+    private Button btnAddAttachment;
+    private Button btnSave;
     private Card card;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
 
@@ -28,7 +37,7 @@ public class CardDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_card_detail);
 
         // Khởi tạo các view
-        tvCardTitle = findViewById(R.id.tvCardTitle);
+        etCardTitle = findViewById(R.id.etCardTitle);
         etDescription = findViewById(R.id.etDescription);
         llMembers = findViewById(R.id.llMembers);
         btnAddMember = findViewById(R.id.btnAddMember);
@@ -36,23 +45,17 @@ public class CardDetailActivity extends AppCompatActivity {
         tvEndDate = findViewById(R.id.tvEndDate);
         llAttachments = findViewById(R.id.llAttachments);
         btnAddAttachment = findViewById(R.id.btnAddAttachment);
+        btnSave = findViewById(R.id.btnSave);
 
         // Nhận dữ liệu từ Intent
-        card = (Card) getIntent().getSerializableExtra("card");
-
-        // Hiển thị thông tin thẻ
-        tvCardTitle.setText(card.getTitle());
-        etDescription.setText(card.getDescription());
-        updateMembersList();
-        updateAttachmentsList();
-        updateDates();
-
-        // Lưu mô tả khi người dùng chỉnh sửa
-        etDescription.setOnFocusChangeListener((v, hasFocus) -> {
-            if (!hasFocus) {
-                card.setDescription(etDescription.getText().toString());
-            }
-        });
+        card = getIntent().getParcelableExtra("card");
+        if (card != null) {
+            etCardTitle.setText(card.getTitle());
+            etDescription.setText(card.getDescription());
+            updateMembersList();
+            updateAttachmentsList();
+            updateDates();
+        }
 
         // Xử lý thêm thành viên
         btnAddMember.setOnClickListener(v -> {
@@ -81,7 +84,7 @@ public class CardDetailActivity extends AppCompatActivity {
         // Xử lý chọn ngày kết thúc
         tvEndDate.setOnClickListener(v -> showDatePicker(false));
 
-        // Xử lý thêm tệp đính kèm (giả lập, có thể tích hợp với file picker)
+        // Xử lý thêm tệp đính kèm (giả lập)
         btnAddAttachment.setOnClickListener(v -> {
             android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
             builder.setTitle("Thêm tệp đính kèm");
@@ -101,6 +104,20 @@ public class CardDetailActivity extends AppCompatActivity {
 
             builder.setNegativeButton("Hủy", (dialog, which) -> dialog.cancel());
             builder.show();
+        });
+
+        // Xử lý lưu các thay đổi
+        btnSave.setOnClickListener(v -> {
+            if (card != null) {
+                card.setTitle(etCardTitle.getText().toString());
+                card.setDescription(etDescription.getText().toString());
+
+                Intent resultIntent = new Intent();
+                resultIntent.putExtra("updatedCard", card);
+                resultIntent.putExtra("position", getIntent().getIntExtra("position", -1));
+                setResult(RESULT_OK, resultIntent);
+                finish();
+            }
         });
     }
 

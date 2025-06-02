@@ -7,7 +7,7 @@ public class TaskList {
     private String title;
     private List<Card> cards;
 
-    public TaskList(String title) {
+    public TaskList() {
         this.title = title;
         this.cards = new ArrayList<>();
     }
