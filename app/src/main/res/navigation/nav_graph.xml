@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_board">
+
+    <fragment
+        android:id="@+id/nav_board"
+        android:name="com.example.SE104_DoAn.BoardFragment"
+        android:label="Board" />
+
+    <fragment
+        android:id="@+id/nav_notifications"
+        android:name="com.example.SE104_DoAn.NotificationsFragment"
+        android:label="Thông báo" />
+
+    <fragment
+        android:id="@+id/nav_account"
+        android:name="com.example.SE104_DoAn.AccountFragment"
+        android:label="Tài khoản" />
+
+</navigation>
