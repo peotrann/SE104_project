@@ -71,11 +71,13 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="170dp"
+        android:layout_marginEnd="10dp"
+        android:paddingVertical="8dp"
         android:text="Cài đặt"
-        android:textSize="16sp"
-        android:textStyle="bold"
         android:textColor="@color/black"
-        android:paddingVertical="8dp" />
+        android:textSize="16sp"
+        android:textStyle="bold" />
 
     <!-- Các mục cài đặt (giả lập) -->
     <TextView

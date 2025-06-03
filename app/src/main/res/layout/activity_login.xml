@@ -16,8 +16,8 @@
         tools:ignore="UselessParent">
 
         <ImageView
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="122dp"
+            android:layout_height="107dp"
             android:src="@drawable/icon_account" />
 
         <EditText
@@ -25,26 +25,26 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:hint="Email"
-            android:textColor="@color/white"
-            android:textColorHint="@color/white"
-            android:textSize="18sp"
             android:background="@drawable/rounded_text_frame"
+            android:hint="Email"
+            android:inputType="textEmailAddress"
             android:padding="10dp"
-            android:inputType="textEmailAddress" />
+            android:textColor="@color/white"
+            android:textColorHint="@color/teal_700"
+            android:textSize="18sp" />
 
         <EditText
             android:id="@+id/etPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:hint="Password"
-            android:textColor="@color/white"
-            android:textColorHint="@color/white"
-            android:textSize="18sp"
             android:background="@drawable/rounded_text_frame"
+            android:hint="Password"
+            android:inputType="textPassword"
             android:padding="10dp"
-            android:inputType="textPassword" />
+            android:textColor="@color/white"
+            android:textColorHint="@color/teal_700"
+            android:textSize="18sp" />
 
         <Button
             android:id="@+id/btnLogin"
@@ -53,6 +53,7 @@
             android:layout_marginTop="20dp"
             android:backgroundTint="#28E5ED"
             android:padding="8dp"
+            android:rotationX="-4"
             android:text="Login"
             android:textColor="@color/black"
             android:textSize="18sp" />
@@ -67,7 +68,7 @@
             android:focusable="true"
             android:gravity="end"
             android:text="Forgot password?"
-            android:textColor="@color/white"
+            android:textColor="@color/transparent"
             android:textSize="14sp" />
 
         <TextView
@@ -80,7 +81,7 @@
             android:focusable="true"
             android:gravity="end"
             android:text="Don't have account? Sign up"
-            android:textColor="@color/white"
+            android:textColor="@color/transparent"
             android:textSize="14sp" />
 
     </LinearLayout>
