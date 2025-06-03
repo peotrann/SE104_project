@@ -8,6 +8,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.Button;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,6 +21,7 @@ public class AccountFragment extends Fragment {
 
     private TextView tvAccountName, tvAccountEmail;
     private ImageButton btnAccountMenu;
+    private Button btnLogout;
     private SharedPreferences sharedPreferences;
     private static final String PREFS_NAME = "MyPrefs";
     private static final String KEY_LOGGED_IN = "isLoggedIn";
@@ -36,6 +38,7 @@ public class AccountFragment extends Fragment {
         tvAccountName = view.findViewById(R.id.tvAccountName);
         tvAccountEmail = view.findViewById(R.id.tvAccountEmail);
         btnAccountMenu = view.findViewById(R.id.btnAccountMenu);
+        btnLogout = view.findViewById(R.id.btnLogout);
 
         // Hiển thị thông tin tài khoản (giả lập)
         tvAccountName.setText("Người dùng");
@@ -69,6 +72,15 @@ public class AccountFragment extends Fragment {
             popupMenu.show();
         });
 
+        btnLogout.setOnClickListener(v -> {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putBoolean(KEY_LOGGED_IN, false);
+            editor.apply();
+
+            Intent intent = new Intent(requireActivity(), LoginActivity.class);
+            startActivity(intent);
+            requireActivity().finish();
+        });
         return view;
     }
 }
