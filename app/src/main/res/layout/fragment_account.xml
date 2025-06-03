@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -80,21 +81,37 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/material_dynamic_neutral80"
+        android:clickable="true"
+        android:focusable="true"
+        android:paddingVertical="12dp"
         android:text="Ngôn ngữ"
         android:textSize="14sp"
-        android:paddingVertical="12dp"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true" />
+        android:visibility="visible"
+        tools:visibility="visible" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Chủ đề"
-        android:textSize="14sp"
-        android:paddingVertical="12dp"
-        android:background="?attr/selectableItemBackground"
+        android:layout_marginTop="10dp"
+        android:background="@color/material_dynamic_neutral70"
         android:clickable="true"
-        android:focusable="true" />
+        android:focusable="true"
+        android:paddingVertical="12dp"
+        android:text="Chủ đề"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/log_out"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="@color/design_default_color_error"
+        android:clickable="true"
+        android:focusable="true"
+        android:fontFamily="sans-serif-black"
+        android:paddingVertical="12dp"
+        android:text="Đăng xuất"
+        android:textSize="14sp" />
 
 </LinearLayout>
