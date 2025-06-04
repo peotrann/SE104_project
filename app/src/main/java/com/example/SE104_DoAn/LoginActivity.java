@@ -7,6 +7,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 public class LoginActivity extends AppCompatActivity {
@@ -17,6 +18,8 @@ public class LoginActivity extends AppCompatActivity {
     private SharedPreferences sharedPreferences;
     private static final String PREFS_NAME = "MyPrefs";
     private static final String KEY_LOGGED_IN = "isLoggedIn";
+    private static final String KEY_EMAIL = "registeredEmail";
+    private static final String KEY_PASSWORD = "registeredPassword";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,11 +69,20 @@ public class LoginActivity extends AppCompatActivity {
 
         // Xử lý đăng ký
         signUpText.setOnClickListener(v -> {
-            Toast.makeText(this, "Chức năng đăng ký chưa được triển khai", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
+            startActivity(intent);
         });
     }
 
     private boolean validateLogin(String email, String password) {
+        String registeredEmail = sharedPreferences.getString(KEY_EMAIL, null);
+        String registeredPassword = sharedPreferences.getString(KEY_PASSWORD, null);
+
+        // Kiểm tra với dữ liệu đã đăng ký, nếu chưa có thì dùng giá trị mặc định
+        if (registeredEmail != null && registeredPassword != null) {
+            return email.equals(registeredEmail) && password.equals(registeredPassword);
+        }
+        // Giá trị mặc định (cho lần đầu)
         return email.equals("user@example.com") && password.equals("password123");
     }
 }

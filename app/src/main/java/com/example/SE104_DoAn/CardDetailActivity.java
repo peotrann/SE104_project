@@ -49,6 +49,9 @@ public class CardDetailActivity extends AppCompatActivity {
 
         // Nhận dữ liệu từ Intent
         card = getIntent().getParcelableExtra("card");
+        int position = getIntent().getIntExtra("position", -1);
+        int listPosition = getIntent().getIntExtra("listPosition", -1);
+
         if (card != null) {
             etCardTitle.setText(card.getTitle());
             etDescription.setText(card.getDescription());
@@ -114,7 +117,8 @@ public class CardDetailActivity extends AppCompatActivity {
 
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra("updatedCard", card);
-                resultIntent.putExtra("position", getIntent().getIntExtra("position", -1));
+                resultIntent.putExtra("position", position); // Truyền lại position
+                resultIntent.putExtra("listPosition", listPosition); // Truyền lại listPosition
                 setResult(RESULT_OK, resultIntent);
                 finish();
             }

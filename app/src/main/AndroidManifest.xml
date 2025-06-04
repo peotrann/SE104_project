@@ -15,6 +15,10 @@ package="com.example.SE104_DoAn">
         </intent-filter>
     </activity>
 
+    <activity
+        android:name=".RegisterActivity"
+        android:exported="true" />
+
     <activity android:name=".MainActivity" />
     <activity android:name=".CardDetailActivity" />
 </application>

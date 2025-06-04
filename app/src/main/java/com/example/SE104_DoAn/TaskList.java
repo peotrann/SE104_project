@@ -23,6 +23,9 @@ public class TaskList {
     public void addCard(Card card) {
         cards.add(card);
     }
+    public void setCards(List<Card> cards) {
+        this.cards = new ArrayList<>(cards); // Tạo bản sao để tránh tham chiếu chung
+    }
 
     public void removeCard(int position) {
         cards.remove(position);

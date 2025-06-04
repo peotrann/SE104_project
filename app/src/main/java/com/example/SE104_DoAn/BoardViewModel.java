@@ -50,6 +50,23 @@ public class BoardViewModel extends ViewModel {
     }
 
     public void updateTaskLists(List<TaskList> updatedTaskLists) {
-        taskLists.setValue(updatedTaskLists);
+        // Tạo bản sao mới để tránh tham chiếu
+        List<TaskList> newTaskLists = new ArrayList<>();
+        for (TaskList taskList : updatedTaskLists) {
+            TaskList newTaskList = new TaskList();
+            List<Card> newCards = new ArrayList<>();
+            for (Card card : taskList.getCards()) {
+                Card newCard = new Card(card.getTitle());
+                newCard.setDescription(card.getDescription());
+                newCard.setMembers(new ArrayList<>(card.getMembers()));
+                newCard.setStartDate(card.getStartDate());
+                newCard.setEndDate(card.getEndDate());
+                newCard.setAttachments(new ArrayList<>(card.getAttachments()));
+                newCards.add(newCard);
+            }
+            newTaskList.setCards(newCards);
+            newTaskLists.add(newTaskList);
+        }
+        taskLists.setValue(newTaskLists);
     }
 }

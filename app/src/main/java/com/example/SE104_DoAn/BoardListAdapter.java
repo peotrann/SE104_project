@@ -70,6 +70,7 @@ public class BoardListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 Intent intent = new Intent(context, CardDetailActivity.class);
                 intent.putExtra("card", card);
                 intent.putExtra("position", cardPosition);
+                intent.putExtra("listPosition", position); // Thêm vị trí của TaskList
                 ((BoardFragment) onAddListListener).startActivityForResult(intent, REQUEST_CODE_UPDATE_CARD);
             });
             listViewHolder.cardRecyclerView.setAdapter(cardAdapter);

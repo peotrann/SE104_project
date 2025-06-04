@@ -1,7 +1,5 @@
 package com.example.SE104_DoAn;
 
-import static android.app.Activity.RESULT_OK;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
@@ -92,30 +90,36 @@ public class BoardFragment extends Fragment implements OnAddListListener {
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CODE_UPDATE_CARD && resultCode == RESULT_OK && data != null) {
+        if (requestCode == REQUEST_CODE_UPDATE_CARD && resultCode == android.app.Activity.RESULT_OK && data != null) {
             Card updatedCard = data.getParcelableExtra("updatedCard");
-            int position = data.getIntExtra("position", -1);
-            int listPosition = -1;
+            int cardPosition = data.getIntExtra("position", -1);
+            int listPosition = data.getIntExtra("listPosition", -1);
 
-            // Tìm danh sách chứa thẻ cần cập nhật
-            List<TaskList> taskLists = boardViewModel.getTaskLists().getValue();
-            if (taskLists != null) {
-                for (int i = 0; i < taskLists.size(); i++) {
-                    List<Card> cards = taskLists.get(i).getCards();
-                    for (int j = 0; j < cards.size(); j++) {
-                        if (j == position) {
-                            listPosition = i;
-                            cards.set(j, updatedCard);
-                            break;
-                        }
-                    }
-                    if (listPosition != -1) break;
-                }
+            // Kiểm tra dữ liệu hợp lệ
+            if (listPosition == -1 || cardPosition == -1) {
+                return;
             }
 
-            // Cập nhật danh sách trong ViewModel
-            if (listPosition != -1) {
-                boardViewModel.updateTaskLists(taskLists);
+            // Lấy danh sách taskLists từ ViewModel
+            List<TaskList> taskLists = boardViewModel.getTaskLists().getValue();
+            if (taskLists != null && listPosition < taskLists.size()) {
+                List<Card> cards = taskLists.get(listPosition).getCards();
+                if (cardPosition < cards.size()) {
+                    // Tạo một bản sao mới của updatedCard để tránh tham chiếu
+                    Card newCard = new Card(updatedCard.getTitle());
+                    newCard.setDescription(updatedCard.getDescription());
+                    newCard.setMembers(new ArrayList<>(updatedCard.getMembers()));
+                    newCard.setStartDate(updatedCard.getStartDate());
+                    newCard.setEndDate(updatedCard.getEndDate());
+                    newCard.setAttachments(new ArrayList<>(updatedCard.getAttachments()));
+
+                    // Cập nhật Card tại vị trí chính xác
+                    cards.set(cardPosition, newCard);
+                    boardViewModel.updateTaskLists(taskLists);
+
+                    // Thông báo cho adapter cập nhật giao diện
+                    boardListAdapter.notifyDataSetChanged();
+                }
             }
         }
     }
