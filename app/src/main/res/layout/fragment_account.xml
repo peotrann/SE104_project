@@ -80,33 +80,35 @@
         android:textStyle="bold" />
 
     <!-- Các mục cài đặt (giả lập) -->
-    <TextView
+    <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/material_dynamic_neutral80"
         android:clickable="true"
         android:focusable="true"
-        android:paddingVertical="12dp"
+        android:paddingVertical="14dp"
         android:paddingHorizontal="12dp"
+        android:gravity="left"
         android:text="Ngôn ngữ"
         android:textSize="14sp"
         android:visibility="visible"
         tools:visibility="visible" />
 
-    <TextView
+    <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:background="@color/material_dynamic_neutral70"
         android:clickable="true"
         android:focusable="true"
-        android:paddingVertical="12dp"
+        android:paddingVertical="14dp"
         android:paddingHorizontal="12dp"
+        android:gravity="left"
         android:text="Chủ đề"
         android:textSize="14sp" />
 
-    <TextView
-        android:id="@+id/log_out"
+    <Button
+        android:id="@+id/btnLogout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
@@ -114,9 +116,11 @@
         android:clickable="true"
         android:focusable="true"
         android:fontFamily="sans-serif-black"
-        android:paddingVertical="12dp"
+        android:paddingVertical="14dp"
         android:paddingHorizontal="12dp"
+        android:gravity="left"
         android:text="Đăng xuất"
+        android:textColor="#FFFFFF"
         android:textSize="14sp" />
 
 </LinearLayout>

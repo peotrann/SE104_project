@@ -49,12 +49,17 @@ public class CardDetailActivity extends AppCompatActivity {
 
         // Nhận dữ liệu từ Intent
         card = getIntent().getParcelableExtra("card");
+        int position = getIntent().getIntExtra("position", -1);
+        int listPosition = getIntent().getIntExtra("listPosition", -1);
+
         if (card != null) {
-            etCardTitle.setText(card.getTitle());
-            etDescription.setText(card.getDescription());
+            etCardTitle.setText(card.getTitle() != null ? card.getTitle() : "");
+            etDescription.setText(card.getDescription() != null ? card.getDescription() : "");
             updateMembersList();
             updateAttachmentsList();
             updateDates();
+        } else {
+            etCardTitle.setText("Error: Card not found");
         }
 
         // Xử lý thêm thành viên
@@ -67,9 +72,9 @@ public class CardDetailActivity extends AppCompatActivity {
             builder.setView(input);
 
             builder.setPositiveButton("Thêm", (dialog, which) -> {
-                String memberName = input.getText().toString();
-                if (!memberName.isEmpty()) {
-                    card.addMember(memberName);
+                String memberName = input.getText().toString().trim();
+                if (!memberName.isEmpty() && card != null) {
+                    card.addMember(memberName); // Giả định Card có phương thức addMember
                     updateMembersList();
                 }
             });
@@ -79,12 +84,16 @@ public class CardDetailActivity extends AppCompatActivity {
         });
 
         // Xử lý chọn ngày bắt đầu
-        tvStartDate.setOnClickListener(v -> showDatePicker(true));
+        tvStartDate.setOnClickListener(v -> {
+            if (card != null) showDatePicker(true);
+        });
 
         // Xử lý chọn ngày kết thúc
-        tvEndDate.setOnClickListener(v -> showDatePicker(false));
+        tvEndDate.setOnClickListener(v -> {
+            if (card != null) showDatePicker(false);
+        });
 
-        // Xử lý thêm tệp đính kèm (giả lập)
+        // Xử lý thêm tệp đính kèm
         btnAddAttachment.setOnClickListener(v -> {
             android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
             builder.setTitle("Thêm tệp đính kèm");
@@ -95,9 +104,9 @@ public class CardDetailActivity extends AppCompatActivity {
             builder.setView(input);
 
             builder.setPositiveButton("Thêm", (dialog, which) -> {
-                String attachmentName = input.getText().toString();
-                if (!attachmentName.isEmpty()) {
-                    card.addAttachment(attachmentName);
+                String attachmentName = input.getText().toString().trim();
+                if (!attachmentName.isEmpty() && card != null) {
+                    card.addAttachment(attachmentName); // Giả định Card có phương thức addAttachment
                     updateAttachmentsList();
                 }
             });
@@ -109,12 +118,13 @@ public class CardDetailActivity extends AppCompatActivity {
         // Xử lý lưu các thay đổi
         btnSave.setOnClickListener(v -> {
             if (card != null) {
-                card.setTitle(etCardTitle.getText().toString());
-                card.setDescription(etDescription.getText().toString());
+                card.setTitle(etCardTitle.getText().toString().trim());
+                card.setDescription(etDescription.getText().toString().trim());
 
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra("updatedCard", card);
-                resultIntent.putExtra("position", getIntent().getIntExtra("position", -1));
+                resultIntent.putExtra("position", position);
+                resultIntent.putExtra("listPosition", listPosition);
                 setResult(RESULT_OK, resultIntent);
                 finish();
             }
@@ -123,27 +133,41 @@ public class CardDetailActivity extends AppCompatActivity {
 
     private void updateMembersList() {
         llMembers.removeAllViews();
-        for (String member : card.getMembers()) {
-            TextView tvMember = new TextView(this);
-            tvMember.setText(member);
-            tvMember.setPadding(0, 0, 0, 8);
-            llMembers.addView(tvMember);
+        if (card != null && card.getMembers() != null) {
+            for (String member : card.getMembers()) {
+                TextView tvMember = new TextView(this);
+                tvMember.setText(member != null ? member : "Unknown");
+                tvMember.setPadding(0, 0, 0, 8);
+                llMembers.addView(tvMember);
+            }
+        } else {
+            TextView tvNoMembers = new TextView(this);
+            tvNoMembers.setText("No members available");
+            tvNoMembers.setPadding(0, 0, 0, 8);
+            llMembers.addView(tvNoMembers);
         }
     }
 
     private void updateAttachmentsList() {
         llAttachments.removeAllViews();
-        for (String attachment : card.getAttachments()) {
-            TextView tvAttachment = new TextView(this);
-            tvAttachment.setText(attachment);
-            tvAttachment.setPadding(0, 0, 0, 8);
-            llAttachments.addView(tvAttachment);
+        if (card != null && card.getAttachments() != null) {
+            for (String attachment : card.getAttachments()) {
+                TextView tvAttachment = new TextView(this);
+                tvAttachment.setText(attachment != null ? attachment : "Unknown");
+                tvAttachment.setPadding(0, 0, 0, 8);
+                llAttachments.addView(tvAttachment);
+            }
+        } else {
+            TextView tvNoAttachments = new TextView(this);
+            tvNoAttachments.setText("No attachments available");
+            tvNoAttachments.setPadding(0, 0, 0, 8);
+            llAttachments.addView(tvNoAttachments);
         }
     }
 
     private void updateDates() {
-        tvStartDate.setText(card.getStartDate() != null ? dateFormat.format(card.getStartDate()) : "Chưa đặt");
-        tvEndDate.setText(card.getEndDate() != null ? dateFormat.format(card.getEndDate()) : "Chưa đặt");
+        tvStartDate.setText(card != null && card.getStartDate() != null ? dateFormat.format(card.getStartDate()) : "Chưa đặt");
+        tvEndDate.setText(card != null && card.getEndDate() != null ? dateFormat.format(card.getEndDate()) : "Chưa đặt");
     }
 
     private void showDatePicker(boolean isStartDate) {
@@ -153,12 +177,14 @@ public class CardDetailActivity extends AppCompatActivity {
                 (view, year, month, dayOfMonth) -> {
                     calendar.set(year, month, dayOfMonth);
                     Date selectedDate = calendar.getTime();
-                    if (isStartDate) {
-                        card.setStartDate(selectedDate);
-                    } else {
-                        card.setEndDate(selectedDate);
+                    if (card != null) {
+                        if (isStartDate) {
+                            card.setStartDate(selectedDate);
+                        } else {
+                            card.setEndDate(selectedDate);
+                        }
+                        updateDates();
                     }
-                    updateDates();
                 },
                 calendar.get(Calendar.YEAR),
                 calendar.get(Calendar.MONTH),

@@ -7,27 +7,44 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
+import java.util.Objects;
 
 public class LoginActivity extends AppCompatActivity {
 
     private EditText etEmail, etPassword;
     private Button btnLogin;
     private TextView forgotPasswordText, signUpText;
+    private FirebaseAuth mAuth;
     private SharedPreferences sharedPreferences;
     private static final String PREFS_NAME = "MyPrefs";
     private static final String KEY_LOGGED_IN = "isLoggedIn";
+    private static final String KEY_EMAIL = "registeredEmail";
+    private static final String KEY_PASSWORD = "registeredPassword";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        // Khởi tạo Firebase Auth
+        mAuth = FirebaseAuth.getInstance();
+
         // Khởi tạo SharedPreferences
         sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
 
         // Kiểm tra trạng thái đăng nhập
-        if (sharedPreferences.getBoolean(KEY_LOGGED_IN, false)) {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null && sharedPreferences.getBoolean(KEY_LOGGED_IN, false)) {
             Intent intent = new Intent(LoginActivity.this, MainActivity.class);
             startActivity(intent);
             finish();
@@ -46,31 +63,63 @@ public class LoginActivity extends AppCompatActivity {
             String email = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
 
-            if (validateLogin(email, password)) {
-                SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putBoolean(KEY_LOGGED_IN, true);
-                editor.apply();
-
-                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                startActivity(intent);
-                finish();
-            } else {
-                Toast.makeText(this, "Email hoặc mật khẩu không đúng", Toast.LENGTH_SHORT).show();
+            if (email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, "Vui lòng điền đầy đủ thông tin", Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            mAuth.signInWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            if (task.isSuccessful()) {
+                                FirebaseUser user = mAuth.getCurrentUser();
+                                SharedPreferences.Editor editor = sharedPreferences.edit();
+                                editor.putBoolean(KEY_LOGGED_IN, true);
+                                editor.apply();
+                                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                                startActivity(intent);
+                                finish();
+                            } else {
+                                Toast.makeText(LoginActivity.this, "Đăng nhập thất bại: " + Objects.requireNonNull(task.getException()).getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
         });
 
         // Xử lý quên mật khẩu
         forgotPasswordText.setOnClickListener(v -> {
-            Toast.makeText(this, "Chức năng quên mật khẩu chưa được triển khai", Toast.LENGTH_SHORT).show();
+            String email = etEmail.getText().toString().trim();
+            if (!email.isEmpty()) {
+                mAuth.sendPasswordResetEmail(email)
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                Toast.makeText(LoginActivity.this, "Email khôi phục đã được gửi", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(LoginActivity.this, "Gửi email thất bại: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        });
+            } else {
+                Toast.makeText(this, "Vui lòng nhập email", Toast.LENGTH_SHORT).show();
+            }
         });
 
         // Xử lý đăng ký
         signUpText.setOnClickListener(v -> {
-            Toast.makeText(this, "Chức năng đăng ký chưa được triển khai", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
+            startActivity(intent);
         });
     }
 
     private boolean validateLogin(String email, String password) {
+        String registeredEmail = sharedPreferences.getString(KEY_EMAIL, null);
+        String registeredPassword = sharedPreferences.getString(KEY_PASSWORD, null);
+
+        // Kiểm tra với dữ liệu đã đăng ký, nếu chưa có thì dùng giá trị mặc định
+        if (registeredEmail != null && registeredPassword != null) {
+            return email.equals(registeredEmail) && password.equals(registeredPassword);
+        }
+        // Giá trị mặc định (cho lần đầu)
         return email.equals("user@example.com") && password.equals("password123");
     }
 }
