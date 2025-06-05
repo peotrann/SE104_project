@@ -35,4 +35,17 @@
         android:focusable="true"
         android:clickable="true"/>
 
+    <TextView
+        android:id="@+id/tvDeleteList"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="❌ Xóa nhóm"
+        android:padding="4dp"
+        android:textColor="#FF0000"
+        android:background="?android:attr/selectableItemBackground"
+        android:focusable="true"
+        android:clickable="true"
+        android:visibility="gone"/>
+
 </LinearLayout>

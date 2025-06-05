@@ -1,12 +1,16 @@
 package com.example.SE104_DoAn;
 
+import static android.app.Activity.RESULT_OK;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,9 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BoardFragment extends Fragment implements OnAddListListener {
-
-    private static final int REQUEST_CODE_UPDATE_CARD = 100;
+public class BoardFragment extends Fragment implements BoardListAdapter.OnAddListListener {
 
     private RecyclerView boardRecyclerView;
     private BoardListAdapter boardListAdapter;
@@ -44,22 +46,58 @@ public class BoardFragment extends Fragment implements OnAddListListener {
         int spacingInPixels = getResources().getDimensionPixelSize(R.dimen.list_spacing);
         boardRecyclerView.addItemDecoration(new ListItemDecoration(spacingInPixels));
 
-        // Khởi tạo adapter với dữ liệu ban đầu
-        boardListAdapter = new BoardListAdapter(getContext(), new ArrayList<>(), new ArrayList<>(), this);
+        boardListAdapter = new BoardListAdapter(getContext(), new ArrayList<>(), new ArrayList<>(), this, boardViewModel);
         boardRecyclerView.setAdapter(boardListAdapter);
 
-        // Quan sát dữ liệu từ ViewModel
+        // Thêm OnAddTaskListener
+        boardListAdapter.setOnAddTaskListener((listPosition, taskTitle) -> {
+            boardViewModel.addTaskToList(listPosition, taskTitle);
+        });
+
         boardViewModel.getListTitles().observe(getViewLifecycleOwner(), titles -> {
-            boardListAdapter.setListTitles(titles);
-            boardListAdapter.notifyDataSetChanged();
+            if (titles != null) {
+                Log.d("BoardFragment", "Titles updated: " + titles.size());
+                boardListAdapter.setListTitles(titles);
+                boardListAdapter.notifyDataSetChanged();
+            } else {
+                Log.w("BoardFragment", "Titles is null, initializing with default");
+                List<String> defaultTitles = new ArrayList<>();
+                defaultTitles.add(null);
+                boardListAdapter.setListTitles(defaultTitles);
+            }
         });
 
         boardViewModel.getTaskLists().observe(getViewLifecycleOwner(), taskLists -> {
-            boardListAdapter.setTaskLists(taskLists);
-            boardListAdapter.notifyDataSetChanged();
+            if (taskLists != null) {
+                boardListAdapter.setTaskLists(taskLists);
+                boardListAdapter.notifyDataSetChanged();
+            } else {
+                Log.w("BoardFragment", "Task lists is null, initializing with default");
+                boardListAdapter.setTaskLists(new ArrayList<>());
+            }
+        });
+
+        boardViewModel.getAddListStatus().observe(getViewLifecycleOwner(), status -> {
+            if (status != null) {
+                Toast.makeText(getContext(), status, Toast.LENGTH_LONG).show();
+            }
         });
 
         return view;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == BoardListAdapter.REQUEST_CODE_UPDATE_CARD && resultCode == RESULT_OK && data != null) {
+            Card updatedCard = data.getParcelableExtra("updatedCard");
+            int position = data.getIntExtra("position", -1);
+            int listPosition = data.getIntExtra("listPosition", -1);
+
+            if (updatedCard != null && position != -1 && listPosition != -1) {
+                boardViewModel.updateCardInList(listPosition, position, updatedCard);
+            }
+        }
     }
 
     @Override
@@ -69,58 +107,23 @@ public class BoardFragment extends Fragment implements OnAddListListener {
 
     private void showAddListDialog() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
-        builder.setTitle("Thêm danh sách mới");
+        builder.setTitle("Thêm nhóm mới");
 
         final EditText input = new EditText(getContext());
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
 
         builder.setPositiveButton("Thêm", (dialog, which) -> {
-            String listTitle = input.getText().toString();
+            String listTitle = input.getText().toString().trim();
             if (!listTitle.isEmpty()) {
                 boardViewModel.addNewList(listTitle);
+            } else {
+                Toast.makeText(getContext(), "Vui lòng nhập tiêu đề danh sách", Toast.LENGTH_SHORT).show();
             }
         });
 
         builder.setNegativeButton("Hủy", (dialog, which) -> dialog.cancel());
 
         builder.show();
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CODE_UPDATE_CARD && resultCode == android.app.Activity.RESULT_OK && data != null) {
-            Card updatedCard = data.getParcelableExtra("updatedCard");
-            int cardPosition = data.getIntExtra("position", -1);
-            int listPosition = data.getIntExtra("listPosition", -1);
-
-            // Kiểm tra dữ liệu hợp lệ
-            if (listPosition == -1 || cardPosition == -1) {
-                return;
-            }
-
-            // Lấy danh sách taskLists từ ViewModel
-            List<TaskList> taskLists = boardViewModel.getTaskLists().getValue();
-            if (taskLists != null && listPosition < taskLists.size()) {
-                List<Card> cards = taskLists.get(listPosition).getCards();
-                if (cardPosition < cards.size()) {
-                    // Tạo một bản sao mới của updatedCard để tránh tham chiếu
-                    Card newCard = new Card(updatedCard.getTitle());
-                    newCard.setDescription(updatedCard.getDescription());
-                    newCard.setMembers(new ArrayList<>(updatedCard.getMembers()));
-                    newCard.setStartDate(updatedCard.getStartDate());
-                    newCard.setEndDate(updatedCard.getEndDate());
-                    newCard.setAttachments(new ArrayList<>(updatedCard.getAttachments()));
-
-                    // Cập nhật Card tại vị trí chính xác
-                    cards.set(cardPosition, newCard);
-                    boardViewModel.updateTaskLists(taskLists);
-
-                    // Thông báo cho adapter cập nhật giao diện
-                    boardListAdapter.notifyDataSetChanged();
-                }
-            }
-        }
     }
 }

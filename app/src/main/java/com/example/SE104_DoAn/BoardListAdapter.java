@@ -2,6 +2,7 @@ package com.example.SE104_DoAn;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,37 +13,56 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
 import java.util.List;
 
 public class BoardListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final int TYPE_LIST = 0;
     private static final int TYPE_ADD = 1;
-    private static final int REQUEST_CODE_UPDATE_CARD = 100;
+    public static final int REQUEST_CODE_UPDATE_CARD = 100;
 
     private Context context;
     private List<String> listTitles;
     private List<TaskList> taskLists;
     private OnAddListListener onAddListListener;
+    private OnAddTaskListener onAddTaskListener;
+    private BoardViewModel boardViewModel;
+    private FirebaseUser currentUser;
 
-    public BoardListAdapter(Context context, List<String> listTitles, List<TaskList> taskLists, OnAddListListener onAddListListener) {
+    public BoardListAdapter(Context context, List<String> listTitles, List<TaskList> taskLists, OnAddListListener onAddListListener, BoardViewModel boardViewModel) {
         this.context = context;
         this.listTitles = listTitles;
         this.taskLists = taskLists;
         this.onAddListListener = onAddListListener;
+        this.boardViewModel = boardViewModel;
+        this.currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        Log.d("BoardListAdapter", "Initialized with listTitles size: " + (listTitles != null ? listTitles.size() : 0));
     }
 
     public void setListTitles(List<String> newListTitles) {
         this.listTitles = newListTitles;
+        Log.d("BoardListAdapter", "setListTitles with size: " + (newListTitles != null ? newListTitles.size() : 0));
+        notifyDataSetChanged();
     }
 
     public void setTaskLists(List<TaskList> newTaskLists) {
         this.taskLists = newTaskLists;
+        notifyDataSetChanged();
+    }
+
+    public void setOnAddTaskListener(OnAddTaskListener listener) {
+        this.onAddTaskListener = listener;
     }
 
     @Override
     public int getItemViewType(int position) {
-        return listTitles.get(position) == null ? TYPE_ADD : TYPE_LIST;
+        if (listTitles != null && position < listTitles.size() && listTitles.get(position) != null) {
+            return TYPE_LIST;
+        }
+        return TYPE_ADD;
     }
 
     @NonNull
@@ -70,25 +90,25 @@ public class BoardListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 Intent intent = new Intent(context, CardDetailActivity.class);
                 intent.putExtra("card", card);
                 intent.putExtra("position", cardPosition);
-                intent.putExtra("listPosition", position); // Thêm vị trí của TaskList
+                intent.putExtra("listPosition", position);
                 ((BoardFragment) onAddListListener).startActivityForResult(intent, REQUEST_CODE_UPDATE_CARD);
             });
             listViewHolder.cardRecyclerView.setAdapter(cardAdapter);
 
             listViewHolder.tvAddCard.setOnClickListener(v -> {
                 android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(context);
-                builder.setTitle("Thêm thẻ mới");
+                builder.setTitle("Thêm task mới");
 
                 final android.widget.EditText input = new android.widget.EditText(context);
                 input.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
                 builder.setView(input);
 
                 builder.setPositiveButton("Thêm", (dialog, which) -> {
-                    String cardTitle = input.getText().toString();
+                    String cardTitle = input.getText().toString().trim();
                     if (!cardTitle.isEmpty()) {
-                        Card card = new Card(cardTitle);
-                        taskList.addCard(card);
-                        cardAdapter.notifyItemInserted(taskList.getCards().size() - 1);
+                        if (onAddTaskListener != null) {
+                            onAddTaskListener.onAddTask(position, cardTitle);
+                        }
                     }
                 });
 
@@ -107,7 +127,7 @@ public class BoardListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public int getItemCount() {
-        return listTitles != null ? listTitles.size() : 0;
+        return listTitles != null ? listTitles.size() : 1;
     }
 
     static class ListViewHolder extends RecyclerView.ViewHolder {
@@ -130,5 +150,15 @@ public class BoardListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             super(itemView);
             btnAddList = itemView.findViewById(R.id.btnAddList);
         }
+    }
+
+    // Định nghĩa interface OnAddListListener
+    public interface OnAddListListener {
+        void onAddList();
+    }
+
+    // Interface OnAddTaskListener (đã có)
+    public interface OnAddTaskListener {
+        void onAddTask(int listPosition, String taskTitle);
     }
 }

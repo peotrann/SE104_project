@@ -9,6 +9,7 @@ import java.util.List;
 
 public class Card implements Parcelable {
     private String title;
+    private String creator;
     private String description;
     private List<String> members;
     private Date startDate;
@@ -22,6 +23,9 @@ public class Card implements Parcelable {
         this.startDate = null;
         this.endDate = null;
         this.attachments = new ArrayList<>();
+    }
+    public Card() {
+        // Constructor mặc định cần thiết cho Firebase
     }
 
     protected Card(Parcel in) {
@@ -117,4 +121,8 @@ public class Card implements Parcelable {
     public void addAttachment(String attachment) {
         this.attachments.add(attachment);
     }
+
+    public String getCreator() { return creator; }
+
+    public void setCreator(String creator) { this.creator = creator; }
 }
