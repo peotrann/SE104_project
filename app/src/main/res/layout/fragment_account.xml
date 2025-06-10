@@ -13,6 +13,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
+        android:layout_marginTop="30dp"
         android:padding="8dp">
 
         <!-- Avatar (giả lập bằng hình tròn) -->

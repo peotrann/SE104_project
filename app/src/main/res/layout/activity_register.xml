@@ -64,6 +64,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
+            android:background="@drawable/rounded_login_button"
             android:backgroundTint="#28E5ED"
             android:padding="8dp"
             android:text="Register"
@@ -80,7 +81,7 @@
             android:focusable="true"
             android:gravity="end"
             android:text="Already have an account? Login"
-            android:textColor="@color/white"
+            android:textColor="@color/black"
             android:textSize="14sp" />
 
     </LinearLayout>
