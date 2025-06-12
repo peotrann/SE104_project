@@ -1,260 +1,284 @@
 package com.example.SE104_DoAn;
 
 import android.util.Log;
-
-import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
-
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-
+import com.google.firebase.firestore.FieldPath;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BoardViewModel extends ViewModel {
-    private final MutableLiveData<List<String>> listTitles = new MutableLiveData<>();
-    private final MutableLiveData<List<TaskList>> taskLists = new MutableLiveData<>();
-    private final MutableLiveData<String> addListStatus = new MutableLiveData<>();
-    private final DatabaseReference mDatabase;
+    private static final String TAG = "BoardViewModel";
+    private final MutableLiveData<List<Group>> groups = new MutableLiveData<>();
+    private final MutableLiveData<Map<String, List<Task>>> groupTasks = new MutableLiveData<>();
+    private final MutableLiveData<String> operationStatus = new MutableLiveData<>();
+
+    private final FirebaseFirestore db;
     private final FirebaseUser currentUser;
-    private final Map<Integer, String> taskListKeys = new HashMap<>();
 
     public BoardViewModel() {
-        mDatabase = FirebaseDatabase.getInstance("https://se104-doan-default-rtdb.asia-southeast1.firebasedatabase.app").getReference();
+        db = FirebaseFirestore.getInstance();
         currentUser = FirebaseAuth.getInstance().getCurrentUser();
-
-        List<String> initialTitles = new ArrayList<>();
-        initialTitles.add(null);
-        listTitles.setValue(initialTitles);
-        taskLists.setValue(new ArrayList<>());
-
-        loadDataFromFirebase();
+        loadGroupsAndTasks();
     }
 
-    private void loadDataFromFirebase() {
+    // --- Getters ---
+    public LiveData<List<Group>> getGroups() { return groups; }
+    public LiveData<Map<String, List<Task>>> getGroupTasks() { return groupTasks; }
+    public LiveData<String> getOperationStatus() { return operationStatus; }
+
+
+    private void loadGroupsAndTasks() {
         if (currentUser == null) {
-            Log.w("BoardViewModel", "User not logged in, cannot load data");
-            addListStatus.setValue("Lỗi: Vui lòng đăng nhập để tải dữ liệu");
+            operationStatus.setValue("Lỗi: Người dùng chưa đăng nhập.");
             return;
         }
 
-        Log.d("BoardViewModel", "Loading data for user: " + currentUser.getUid());
-        mDatabase.child("users").child(currentUser.getUid()).child("taskLists")
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        List<String> titles = new ArrayList<>();
-                        List<TaskList> lists = new ArrayList<>();
-                        taskListKeys.clear();
-                        int index = 0;
-
-                        for (DataSnapshot taskSnapshot : snapshot.getChildren()) {
-                            String title = taskSnapshot.child("title").getValue(String.class);
-                            String creator = taskSnapshot.child("creator").getValue(String.class);
-                            Map<String, String> members = (Map<String, String>) taskSnapshot.child("members").getValue();
-                            List<Card> cards = new ArrayList<>();
-                            for (DataSnapshot cardSnapshot : taskSnapshot.child("cards").getChildren()) {
-                                Card card = cardSnapshot.getValue(Card.class);
-                                if (card != null) {
-                                    cards.add(card);
-                                }
-                            }
-
-                            TaskList taskList = new TaskList();
-                            taskList.setCards(cards != null ? cards : new ArrayList<>());
-                            taskList.setCreator(creator != null ? creator : "");
-                            taskList.setMembers(members != null ? members : new HashMap<>());
-                            titles.add(title);
-                            lists.add(taskList);
-                            taskListKeys.put(index++, taskSnapshot.getKey());
-                        }
-
-                        if (titles.isEmpty()) {
-                            titles.add(null);
-                        } else if (titles.get(titles.size() - 1) != null) {
-                            titles.add(null);
-                        }
-
-                        Log.d("BoardViewModel", "Loaded " + titles.size() + " titles from Firebase");
-                        listTitles.setValue(titles);
-                        taskLists.setValue(lists);
+        // Truy vấn collection Member để lấy các group mà user là thành viên.
+        db.collection("Member")
+                .whereEqualTo("user_id", currentUser.getUid())
+                .addSnapshotListener((memberSnapshots, error) -> {
+                    if (error != null) {
+                        Log.e(TAG, "Error loading member data", error);
+                        operationStatus.setValue("Lỗi tải dữ liệu thành viên.");
+                        return;
+                    }
+                    if (memberSnapshots == null || memberSnapshots.isEmpty()) {
+                        groups.setValue(new ArrayList<>());
+                        groupTasks.setValue(new HashMap<>());
+                        return;
                     }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        Log.e("BoardViewModel", "loadDataFromFirebase failed: " + error.getMessage());
-                        addListStatus.setValue("Lỗi khi tải dữ liệu: " + error.getMessage());
+                    List<String> groupIds = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : memberSnapshots) {
+                        String groupId = doc.getString("group_id");
+                        if (groupId != null) {
+                            groupIds.add(groupId);
+                        }
                     }
-                });
-    }
 
-    public LiveData<List<String>> getListTitles() {
-        return listTitles;
-    }
-
-    public LiveData<List<TaskList>> getTaskLists() {
-        return taskLists;
-    }
-
-    public LiveData<String> getAddListStatus() {
-        return addListStatus;
-    }
-
-    public void addNewList(String title) {
-        Log.d("BoardViewModel", "Attempting to add new list: " + title);
-        if (currentUser == null) {
-            Log.e("BoardViewModel", "User not logged in, cannot add new list");
-            addListStatus.setValue("Lỗi: Vui lòng đăng nhập trước khi thêm danh sách");
-            return;
-        }
-
-        Log.d("BoardViewModel", "User UID: " + currentUser.getUid());
-        DatabaseReference newListRef = mDatabase.child("users").child(currentUser.getUid()).child("taskLists").push();
-        TaskList taskList = new TaskList();
-        taskList.setCreator(currentUser.getUid());
-        Map<String, String> members = new HashMap<>();
-        members.put(currentUser.getUid(), "leader");
-        taskList.setMembers(members);
-
-        Map<String, Object> taskListValues = new HashMap<>();
-        taskListValues.put("title", title);
-        taskListValues.put("creator", currentUser.getUid());
-        taskListValues.put("members", taskList.getMembers());
-        taskListValues.put("cards", taskList.getCards());
-
-        newListRef.setValue(taskListValues)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d("BoardViewModel", "Successfully added list to Firebase: " + title);
-                    addListStatus.setValue("Danh sách " + title + " đã được thêm thành công");
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("BoardViewModel", "Failed to add new list to Firebase: " + e.getMessage());
-                    addListStatus.setValue("Lỗi: Không thể thêm danh sách. " + e.getMessage());
-                })
-                .addOnCompleteListener(task -> {
-                    if (!task.isSuccessful()) {
-                        Log.e("BoardViewModel", "Task incomplete: " + (task.getException() != null ? task.getException().getMessage() : "Unknown error"));
+                    // Dùng danh sách groupIds để lấy thông tin chi tiết của các group đó.
+                    if (!groupIds.isEmpty()) {
+                        fetchGroupsDetails(groupIds);
                     } else {
-                        Log.d("BoardViewModel", "Task completed");
+                        // Nếu user là thành viên nhưng không có group id hợp lệ.
+                        groups.setValue(new ArrayList<>());
+                        groupTasks.setValue(new HashMap<>());
                     }
                 });
     }
 
-    public void addTaskToList(int listPosition, String taskTitle) {
-        Log.d("BoardViewModel", "Attempting to add task: " + taskTitle + " to list at position: " + listPosition);
-        if (currentUser == null) {
-            Log.e("BoardViewModel", "User not logged in, cannot add task");
-            addListStatus.setValue("Lỗi: Vui lòng đăng nhập trước khi thêm task");
-            return;
-        }
-
-        String taskListKey = taskListKeys.get(listPosition);
-        if (taskListKey == null) {
-            Log.e("BoardViewModel", "Invalid list position: " + listPosition);
-            addListStatus.setValue("Lỗi: Vị trí danh sách không hợp lệ");
-            return;
-        }
-
-        DatabaseReference taskListRef = mDatabase.child("users").child(currentUser.getUid()).child("taskLists").child(taskListKey).child("cards").push();
-        Card newCard = new Card();
-        newCard.setTitle(taskTitle);
-        newCard.setCreator(currentUser.getUid());
-
-        taskListRef.setValue(newCard)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d("BoardViewModel", "Successfully added task to Firebase: " + taskTitle);
-                    addListStatus.setValue("Task " + taskTitle + " đã được thêm thành công");
-                    loadDataFromFirebase(); // Cập nhật lại dữ liệu
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("BoardViewModel", "Failed to add task to Firebase: " + e.getMessage());
-                    addListStatus.setValue("Lỗi: Không thể thêm task. " + e.getMessage());
-                })
-                .addOnCompleteListener(task -> {
-                    if (!task.isSuccessful()) {
-                        Log.e("BoardViewModel", "Task incomplete: " + (task.getException() != null ? task.getException().getMessage() : "Unknown error"));
-                    } else {
-                        Log.d("BoardViewModel", "Task completed");
+    private void fetchGroupsDetails(List<String> groupIds) {
+        db.collection("Group").whereIn(FieldPath.documentId(), groupIds)
+                .addSnapshotListener((groupSnapshots, error) -> {
+                    if (error != null) {
+                        Log.e(TAG, "Error fetching group details", error);
+                        return;
                     }
+                    if (groupSnapshots == null) return;
+
+                    List<Group> fetchedGroups = groupSnapshots.toObjects(Group.class);
+                    groups.setValue(fetchedGroups);
+                    fetchAllTasksForGroups(fetchedGroups);
                 });
     }
 
-    // Thêm phương thức để cập nhật card
-    public void updateCardInList(int listPosition, int cardPosition, Card updatedCard) {
-        Log.d("BoardViewModel", "Attempting to update card at listPosition: " + listPosition + ", cardPosition: " + cardPosition);
-        if (currentUser == null) {
-            Log.e("BoardViewModel", "User not logged in, cannot update card");
-            addListStatus.setValue("Lỗi: Vui lòng đăng nhập trước khi cập nhật card");
+    private void fetchAllTasksForGroups(List<Group> groupList) {
+        if (groupList.isEmpty()) {
+            groupTasks.postValue(new HashMap<>());
             return;
         }
 
-        String taskListKey = taskListKeys.get(listPosition);
-        if (taskListKey == null) {
-            Log.e("BoardViewModel", "Invalid list position: " + listPosition);
-            addListStatus.setValue("Lỗi: Vị trí danh sách không hợp lệ");
-            return;
-        }
+        Map<String, List<Task>> allTasksMap = new HashMap<>();
+        AtomicInteger counter = new AtomicInteger(groupList.size());
 
-        // Lấy danh sách cards từ Firebase để tìm key của card
-        mDatabase.child("users").child(currentUser.getUid()).child("taskLists").child(taskListKey).child("cards")
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        int currentPosition = 0;
-                        for (DataSnapshot cardSnapshot : snapshot.getChildren()) {
-                            if (currentPosition == cardPosition) {
-                                String cardKey = cardSnapshot.getKey();
-                                DatabaseReference cardRef = mDatabase.child("users").child(currentUser.getUid()).child("taskLists").child(taskListKey).child("cards").child(cardKey);
-                                cardRef.setValue(updatedCard)
-                                        .addOnSuccessListener(aVoid -> {
-                                            Log.d("BoardViewModel", "Successfully updated card: " + updatedCard.getTitle());
-                                            addListStatus.setValue("Card " + updatedCard.getTitle() + " đã được cập nhật thành công");
-                                            loadDataFromFirebase(); // Cập nhật lại dữ liệu
-                                        })
-                                        .addOnFailureListener(e -> {
-                                            Log.e("BoardViewModel", "Failed to update card: " + e.getMessage());
-                                            addListStatus.setValue("Lỗi: Không thể cập nhật card. " + e.getMessage());
-                                        });
-                                break;
-                            }
-                            currentPosition++;
+        for (Group group : groupList) {
+            db.collection("Task")
+                    .whereEqualTo("group_id", group.getGroup_id())
+                    .orderBy("created_at", Query.Direction.ASCENDING)
+                    .addSnapshotListener((taskSnapshots, error) -> {
+                        if (error != null) {
+                            Log.e(TAG, "Error fetching tasks for group " + group.getGroup_id(), error);
+                        } else if (taskSnapshots != null) {
+                            allTasksMap.put(group.getGroup_id(), taskSnapshots.toObjects(Task.class));
                         }
-                    }
+                        if (counter.decrementAndGet() == 0) {
+                            groupTasks.postValue(allTasksMap);
+                        }
+                    });
+        }
+    }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        Log.e("BoardViewModel", "updateCardInList failed: " + error.getMessage());
-                        addListStatus.setValue("Lỗi khi cập nhật card: " + error.getMessage());
+    public void addGroup(String groupName) {
+        if (currentUser == null) return;
+        Group newGroup = new Group(groupName, "", currentUser.getUid());
+        db.collection("Group").add(newGroup)
+                .addOnSuccessListener(documentReference -> {
+                    String groupId = documentReference.getId();
+                    Map<String, Object> memberData = new HashMap<>();
+                    memberData.put("user_id", currentUser.getUid());
+                    memberData.put("group_id", groupId);
+                    memberData.put("role", "admin");
+                    memberData.put("joined_at", new Date());
+                    db.collection("Member").document(currentUser.getUid() + "_" + groupId).set(memberData)
+                            .addOnSuccessListener(aVoid -> operationStatus.setValue("Tạo nhóm '" + groupName + "' thành công."))
+                            .addOnFailureListener(e -> operationStatus.setValue("Lỗi khi thêm thành viên."));
+                })
+                .addOnFailureListener(e -> operationStatus.setValue("Lỗi khi tạo nhóm: " + e.getMessage()));
+    }
+
+    public void addTaskToGroup(String groupId, String taskTitle) {
+        if (currentUser == null || groupId == null) return;
+        Task newTask = new Task();
+        newTask.setTitle(taskTitle);
+        newTask.setGroup_id(groupId);
+        newTask.setStatus("to-do");
+        newTask.getMembers().add(currentUser.getUid()); // Tự động thêm người tạo vào task
+        db.collection("Task").add(newTask)
+                .addOnSuccessListener(docRef -> operationStatus.setValue("Thêm task '" + taskTitle + "' thành công."))
+                .addOnFailureListener(e -> operationStatus.setValue("Lỗi khi thêm task."));
+    }
+
+    public void deleteTask(String taskId) {
+        if (taskId == null || taskId.isEmpty()) return;
+        db.collection("Task").document(taskId).delete()
+                .addOnSuccessListener(aVoid -> operationStatus.setValue("Xóa task thành công."))
+                .addOnFailureListener(e -> operationStatus.setValue("Lỗi khi xóa task."));
+    }
+
+    public void updateTask(Task task) {
+        if (task == null || task.getTask_id() == null) return;
+        db.collection("Task").document(task.getTask_id()).set(task)
+                .addOnSuccessListener(aVoid -> operationStatus.setValue("Cập nhật task thành công."))
+                .addOnFailureListener(e -> operationStatus.setValue("Lỗi khi cập nhật task."));
+    }
+
+    public LiveData<Task> getTaskById(String taskId) {
+        MutableLiveData<Task> taskData = new MutableLiveData<>();
+        db.collection("Task").document(taskId)
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null) {
+                        Log.e(TAG, "Error listening to task", error);
+                        operationStatus.setValue("Lỗi khi tải chi tiết task.");
+                        return;
                     }
+                    if (snapshot != null && snapshot.exists()) {
+                        taskData.setValue(snapshot.toObject(Task.class));
+                    }
+                });
+        return taskData;
+    }
+
+    public void addUserToTask(String taskId, String userEmail) {
+        if (taskId == null || userEmail == null || userEmail.trim().isEmpty()) {
+            operationStatus.setValue("Email không hợp lệ.");
+            return;
+        }
+        db.collection("User").whereEqualTo("email", userEmail.trim()).limit(1).get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (queryDocumentSnapshots.isEmpty()) {
+                        operationStatus.setValue("Không tìm thấy người dùng với email: " + userEmail);
+                    } else {
+                        String targetUserId = queryDocumentSnapshots.getDocuments().get(0).getId();
+                        db.collection("Task").document(taskId)
+                                .update("members", FieldValue.arrayUnion(targetUserId))
+                                .addOnSuccessListener(aVoid -> operationStatus.setValue("Thêm thành viên thành công!"))
+                                .addOnFailureListener(e -> operationStatus.setValue("Lỗi khi thêm thành viên."));
+                    }
+                })
+                .addOnFailureListener(e -> operationStatus.setValue("Lỗi khi tìm kiếm người dùng."));
+    }
+
+    public void removeUserFromTask(String taskId, String userId) {
+        if (taskId == null || userId == null) return;
+        db.collection("Task").document(taskId)
+                .update("members", FieldValue.arrayRemove(userId))
+                .addOnSuccessListener(aVoid -> operationStatus.setValue("Xóa thành viên thành công!"))
+                .addOnFailureListener(e -> operationStatus.setValue("Lỗi khi xóa thành viên."));
+    }
+
+    public void addUserToGroup(String groupId, String userEmail) {
+        if (groupId == null || userEmail == null || userEmail.trim().isEmpty()) {
+            operationStatus.setValue("Email hoặc Group ID không hợp lệ.");
+            return;
+        }
+
+        // Tìm user trong collection "User" bằng email
+        db.collection("User").whereEqualTo("email", userEmail.trim()).limit(1).get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (queryDocumentSnapshots.isEmpty()) {
+                        operationStatus.setValue("Không tìm thấy người dùng với email: " + userEmail);
+                    } else {
+                        // Lấy user_id của người dùng được tìm thấy
+                        String targetUserId = queryDocumentSnapshots.getDocuments().get(0).getId();
+
+                        // Bước 2: Tạo một bản ghi mới trong collection "Member"
+                        Map<String, Object> memberData = new HashMap<>();
+                        memberData.put("user_id", targetUserId);
+                        memberData.put("group_id", groupId);
+                        memberData.put("role", "member"); // Gán vai trò là thành viên
+                        memberData.put("joined_at", new Date());
+
+                        db.collection("Member").document(targetUserId + "_" + groupId).set(memberData)
+                                .addOnSuccessListener(aVoid -> operationStatus.setValue("Thêm thành viên vào nhóm thành công!"))
+                                .addOnFailureListener(e -> operationStatus.setValue("Lỗi khi thêm thành viên vào nhóm."));
+                    }
+                })
+                .addOnFailureListener(e -> operationStatus.setValue("Lỗi khi tìm kiếm người dùng."));
+    }
+
+    public void updateUsername(String newUsername) {
+        if (currentUser == null) {
+            operationStatus.setValue("Người dùng chưa đăng nhập.");
+            return;
+        }
+        if (newUsername == null || newUsername.trim().isEmpty()) {
+            operationStatus.setValue("Tên người dùng không được để trống.");
+            return;
+        }
+
+        String uid = currentUser.getUid();
+        // Dùng .update() để chỉ cập nhật một trường duy nhất
+        db.collection("User").document(uid)
+                .update("username", newUsername.trim())
+                .addOnSuccessListener(aVoid -> operationStatus.setValue("Cập nhật tên thành công!"))
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Lỗi khi cập nhật username", e);
+                    operationStatus.setValue("Cập nhật tên thất bại.");
                 });
     }
 
-    public void updateTaskLists(List<TaskList> updatedTaskLists) {
-        List<TaskList> newTaskLists = new ArrayList<>();
-        for (TaskList taskList : updatedTaskLists) {
-            TaskList newTaskList = new TaskList();
-            newTaskList.setCards(new ArrayList<>(taskList.getCards()));
-            newTaskList.setCreator(taskList.getCreator());
-            newTaskList.setMembers(new HashMap<>(taskList.getMembers()));
-            newTaskLists.add(newTaskList);
+    public LiveData<String> getCurrentUserRoleForGroup(String groupId) {
+        MutableLiveData<String> userRole = new MutableLiveData<>();
+        if (currentUser == null || groupId == null) {
+            userRole.setValue(null);
+            return userRole;
         }
-        taskLists.setValue(newTaskLists);
-    }
-
-    public DatabaseReference getDatabaseReference() {
-        return mDatabase;
-    }
-
-    public String getTaskListKey(int position) {
-        return taskListKeys.get(position);
+        String memberDocId = currentUser.getUid() + "_" + groupId;
+        db.collection("Member").document(memberDocId)
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null) {
+                        Log.e(TAG, "Lỗi khi lấy vai trò người dùng", error);
+                        userRole.setValue(null);
+                        return;
+                    }
+                    if (snapshot != null && snapshot.exists()) {
+                        userRole.setValue(snapshot.getString("role"));
+                    } else {
+                        userRole.setValue(null); // Không phải là thành viên
+                    }
+                });
+        return userRole;
     }
 }

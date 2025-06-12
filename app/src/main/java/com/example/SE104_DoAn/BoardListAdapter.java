@@ -1,68 +1,59 @@
 package com.example.SE104_DoAn;
 
 import android.content.Context;
-import android.content.Intent;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class BoardListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final int TYPE_LIST = 0;
     private static final int TYPE_ADD = 1;
-    public static final int REQUEST_CODE_UPDATE_CARD = 100;
 
     private Context context;
-    private List<String> listTitles;
-    private List<TaskList> taskLists;
-    private OnAddListListener onAddListListener;
-    private OnAddTaskListener onAddTaskListener;
-    private BoardViewModel boardViewModel;
-    private FirebaseUser currentUser;
+    private List<Group> groups = new ArrayList<>();
+    private Map<String, List<Task>> groupTasks = new HashMap<>();
 
-    public BoardListAdapter(Context context, List<String> listTitles, List<TaskList> taskLists, OnAddListListener onAddListListener, BoardViewModel boardViewModel) {
+    // Listeners for Fragment
+    private final Runnable onAddGroupListener;
+    private final Consumer<Task> onTaskClickListener;
+    private final Consumer<String> onTaskDeleteListener;
+    private final BiConsumer<String, String> onTaskAddListener; // Consumer<groupId, taskTitle>
+
+    public BoardListAdapter(Context context, Runnable onAddGroupListener, BiConsumer<String, String> onTaskAddListener, Consumer<Task> onTaskClickListener, Consumer<String> onTaskDeleteListener) {
         this.context = context;
-        this.listTitles = listTitles;
-        this.taskLists = taskLists;
-        this.onAddListListener = onAddListListener;
-        this.boardViewModel = boardViewModel;
-        this.currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        Log.d("BoardListAdapter", "Initialized with listTitles size: " + (listTitles != null ? listTitles.size() : 0));
+        this.onAddGroupListener = onAddGroupListener;
+        this.onTaskAddListener = onTaskAddListener;
+        this.onTaskClickListener = onTaskClickListener;
+        this.onTaskDeleteListener = onTaskDeleteListener;
     }
 
-    public void setListTitles(List<String> newListTitles) {
-        this.listTitles = newListTitles;
-        Log.d("BoardListAdapter", "setListTitles with size: " + (newListTitles != null ? newListTitles.size() : 0));
+    public void setGroups(List<Group> newGroups) {
+        this.groups = newGroups;
         notifyDataSetChanged();
     }
 
-    public void setTaskLists(List<TaskList> newTaskLists) {
-        this.taskLists = newTaskLists;
+    public void setGroupTasks(Map<String, List<Task>> newTasks) {
+        this.groupTasks = newTasks;
         notifyDataSetChanged();
-    }
-
-    public void setOnAddTaskListener(OnAddTaskListener listener) {
-        this.onAddTaskListener = listener;
     }
 
     @Override
     public int getItemViewType(int position) {
-        if (listTitles != null && position < listTitles.size() && listTitles.get(position) != null) {
-            return TYPE_LIST;
-        }
-        return TYPE_ADD;
+        return position < groups.size() ? TYPE_LIST : TYPE_ADD;
     }
 
     @NonNull
@@ -79,47 +70,38 @@ public class BoardListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        if (holder instanceof ListViewHolder) {
+        if (holder.getItemViewType() == TYPE_LIST) {
             ListViewHolder listViewHolder = (ListViewHolder) holder;
-            String title = listTitles.get(position);
-            TaskList taskList = taskLists.get(position);
+            Group currentGroup = groups.get(position);
+            listViewHolder.tvListTitle.setText(currentGroup.getName());
 
-            listViewHolder.tvListTitle.setText(title);
             listViewHolder.cardRecyclerView.setLayoutManager(new LinearLayoutManager(context));
-            CardAdapter cardAdapter = new CardAdapter(taskList.getCards(), (card, cardPosition) -> {
-                Intent intent = new Intent(context, CardDetailActivity.class);
-                intent.putExtra("card", card);
-                intent.putExtra("position", cardPosition);
-                intent.putExtra("listPosition", position);
-                ((BoardFragment) onAddListListener).startActivityForResult(intent, REQUEST_CODE_UPDATE_CARD);
-            });
-            listViewHolder.cardRecyclerView.setAdapter(cardAdapter);
+            List<Task> tasks = groupTasks.getOrDefault(currentGroup.getGroup_id(), new ArrayList<>());
+
+            TaskAdapter taskAdapter = new TaskAdapter(context, tasks, onTaskClickListener, onTaskDeleteListener);
+            listViewHolder.cardRecyclerView.setAdapter(taskAdapter);
 
             listViewHolder.tvAddCard.setOnClickListener(v -> {
-                android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(context);
-                builder.setTitle("Thêm task mới");
-
-                final android.widget.EditText input = new android.widget.EditText(context);
-                input.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
-                builder.setView(input);
-
-                builder.setPositiveButton("Thêm", (dialog, which) -> {
-                    String cardTitle = input.getText().toString().trim();
-                    if (!cardTitle.isEmpty()) {
-                        if (onAddTaskListener != null) {
-                            onAddTaskListener.onAddTask(position, cardTitle);
-                        }
-                    }
-                });
-
-                builder.setNegativeButton("Hủy", (dialog, which) -> dialog.cancel());
-                builder.show();
+                final EditText input = new EditText(context);
+                new AlertDialog.Builder(context)
+                        .setTitle("Thêm Task Mới")
+                        .setMessage("Nhập tiêu đề cho task mới")
+                        .setView(input)
+                        .setPositiveButton("Thêm", (dialog, which) -> {
+                            String taskTitle = input.getText().toString().trim();
+                            if (!taskTitle.isEmpty() && onTaskAddListener != null) {
+                                onTaskAddListener.accept(currentGroup.getGroup_id(), taskTitle);
+                            }
+                        })
+                        .setNegativeButton("Hủy", null)
+                        .show();
             });
-        } else if (holder instanceof AddListViewHolder) {
+
+        } else if (holder.getItemViewType() == TYPE_ADD) {
             AddListViewHolder addListViewHolder = (AddListViewHolder) holder;
             addListViewHolder.btnAddList.setOnClickListener(v -> {
-                if (onAddListListener != null) {
-                    onAddListListener.onAddList();
+                if (onAddGroupListener != null) {
+                    onAddGroupListener.run();
                 }
             });
         }
@@ -127,14 +109,14 @@ public class BoardListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public int getItemCount() {
-        return listTitles != null ? listTitles.size() : 1;
+        return groups.size() + 1; // +1 for the "Add List" button
     }
 
+    // ViewHolders
     static class ListViewHolder extends RecyclerView.ViewHolder {
         TextView tvListTitle;
         RecyclerView cardRecyclerView;
         TextView tvAddCard;
-
         public ListViewHolder(@NonNull View itemView) {
             super(itemView);
             tvListTitle = itemView.findViewById(R.id.listTitle);
@@ -145,20 +127,9 @@ public class BoardListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     static class AddListViewHolder extends RecyclerView.ViewHolder {
         Button btnAddList;
-
         public AddListViewHolder(@NonNull View itemView) {
             super(itemView);
             btnAddList = itemView.findViewById(R.id.btnAddList);
         }
-    }
-
-    // Định nghĩa interface OnAddListListener
-    public interface OnAddListListener {
-        void onAddList();
-    }
-
-    // Interface OnAddTaskListener (đã có)
-    public interface OnAddTaskListener {
-        void onAddTask(int listPosition, String taskTitle);
     }
 }

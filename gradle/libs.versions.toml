@@ -2,11 +2,13 @@
 agp = "8.9.1"
 firebaseAppcheckPlayintegrity = "18.0.0"
 firebaseBom = "33.14.0"
+firebaseFirestore = "25.1.4"
 googleServices = "4.4.2"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 appcompat = "1.7.0"
+lifecycleRuntime = "2.9.1"
 material = "1.12.0"
 playServicesIntegrity = "18.1.0"
 playServicesSafetynet = "18.1.0"
@@ -24,11 +26,13 @@ firebase-auth = { module = "com.google.firebase:firebase-auth" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
+google-firebase-firestore = { module = "com.google.firebase:firebase-firestore", version.ref = "firebaseFirestore" }
 google-services = { module = "com.google.gms:google-services", version.ref = "googleServices" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+lifecycle-runtime = { module = "androidx.lifecycle:lifecycle-runtime", version.ref = "lifecycleRuntime" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 play-services-integrity = { module = "com.google.android.gms:play-services-integrity", version.ref = "playServicesIntegrity" }
 play-services-safetynet = { module = "com.google.android.gms:play-services-safetynet", version.ref = "playServicesSafetynet" }

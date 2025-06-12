@@ -42,6 +42,7 @@ dependencies {
     implementation(libs.navigation.ui)
     implementation(libs.lifecycle.viewmodel)
     implementation(libs.lifecycle.livedata)
+    implementation(libs.lifecycle.runtime)
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
@@ -49,6 +50,7 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.database)
+    implementation(libs.google.firebase.firestore)
     implementation(libs.firebase.appcheck.playintegrity)
 
     testImplementation(libs.junit)
