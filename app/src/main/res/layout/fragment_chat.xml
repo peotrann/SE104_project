@@ -2,16 +2,18 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/board_background"
+    android:backgroundTint="@color/white"
     android:orientation="vertical"
     android:padding="8dp">
 
     <!-- Danh sách tin nhắn -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvChatMessages"
-        android:layout_width="match_parent"
+        android:layout_width="411dp"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="@android:color/white" />
+        android:background="@drawable/board_background" />
 
     <!-- Ô nhập tin nhắn -->
     <LinearLayout
@@ -25,13 +27,14 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Nhập tin nhắn..."
+            android:hint="Type a message..."
             android:inputType="text" />
 
         <Button
             android:id="@+id/btnSendMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@drawable/circle_background"
             android:text="Gửi" />
     </LinearLayout>
 </LinearLayout>

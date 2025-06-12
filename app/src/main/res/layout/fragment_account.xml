@@ -36,7 +36,7 @@
                 android:id="@+id/tvAccountName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Tên tài khoản"
+                android:text="Account"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="@color/black" />
@@ -75,22 +75,23 @@
         android:layout_marginLeft="170dp"
         android:layout_marginEnd="10dp"
         android:paddingVertical="8dp"
-        android:text="Cài đặt"
+        android:text="Settings"
         android:textColor="@color/black"
         android:textSize="16sp"
         android:textStyle="bold" />
 
     <!-- Các mục cài đặt (giả lập) -->
+
     <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/material_dynamic_neutral80"
+        android:layout_width="382dp"
+        android:layout_height="53dp"
+        android:background="@drawable/circle_background"
         android:clickable="true"
         android:focusable="true"
-        android:paddingVertical="14dp"
-        android:paddingHorizontal="12dp"
         android:gravity="left"
-        android:text="Ngôn ngữ"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="14dp"
+        android:text="Languages"
         android:textSize="14sp"
         android:visibility="visible"
         tools:visibility="visible" />
@@ -99,13 +100,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:background="@color/material_dynamic_neutral70"
+        android:background="@drawable/circle_background"
         android:clickable="true"
         android:focusable="true"
-        android:paddingVertical="14dp"
-        android:paddingHorizontal="12dp"
         android:gravity="left"
-        android:text="Chủ đề"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="14dp"
+        android:text="Themes"
         android:textSize="14sp" />
 
     <Button
@@ -117,10 +118,10 @@
         android:clickable="true"
         android:focusable="true"
         android:fontFamily="sans-serif-black"
-        android:paddingVertical="14dp"
-        android:paddingHorizontal="12dp"
         android:gravity="left"
-        android:text="Đăng xuất"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="14dp"
+        android:text="Log out"
         android:textColor="#FFFFFF"
         android:textSize="14sp" />
 

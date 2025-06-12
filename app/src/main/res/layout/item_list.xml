@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingBottom="4dp"
-        android:text="Danh sách task"
+        android:text="Task list"
         android:textColor="@color/white"
         android:textSize="18sp"
         android:textStyle="bold" />
@@ -28,11 +28,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:background="?android:attr/selectableItemBackground"
+        android:background="@drawable/circle_background_alternative"
+        android:backgroundTint="#3F3F3F"
         android:clickable="true"
         android:focusable="true"
         android:padding="4dp"
-        android:text="➕ Thêm Task"
+        android:text="➕ Add Task"
         android:textColor="#FFFFFF" />
 
     <TextView
@@ -40,7 +41,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:text="❌ Xóa nhóm"
+        android:text="❌ Delete group"
         android:padding="4dp"
         android:textColor="#FF0000"
         android:background="?android:attr/selectableItemBackground"
