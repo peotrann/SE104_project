@@ -2,7 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#FAE781"
+    android:layout_marginTop="50dp"
+    android:background="#F4F2F2"
     android:orientation="vertical"
     android:padding="16dp">
 
@@ -10,7 +11,6 @@
         android:id="@+id/tvGroupName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:alpha="@dimen/list_spacing"
         android:text="Tên Group"
         android:textColor="@android:color/black"
         android:textSize="18sp"

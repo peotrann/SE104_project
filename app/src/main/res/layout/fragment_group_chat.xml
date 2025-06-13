@@ -37,7 +37,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/circle_background"
-            android:backgroundTint="#E20404"
+            android:backgroundTint="#ADBDEB"
             android:text="Gửi" />
     </LinearLayout>
 
