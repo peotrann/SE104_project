@@ -1,41 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.recyclerview.widget.RecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rvChatLobby"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/board_background"
-    android:orientation="vertical"
-    android:padding="8dp">
-
-    <!-- Danh sách tin nhắn -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvChatMessages"
-        android:layout_width="431dp"
-        android:layout_height="786dp"
-        android:layout_weight="1"
-        android:background="@drawable/board_background" />
-
-    <!-- Ô nhập tin nhắn -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/board_background"
-        android:orientation="horizontal"
-        android:padding="8dp">
-
-        <EditText
-            android:id="@+id/etMessageInput"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="Type a message..."
-            android:inputType="text" />
-
-        <Button
-            android:id="@+id/btnSendMessage"
-            android:layout_width="61dp"
-            android:layout_height="wrap_content"
-            android:background="@drawable/circle_background"
-            android:backgroundTint="#F53737"
-            android:text="Send" />
-    </LinearLayout>
-</LinearLayout>
+    android:padding="8dp"/>

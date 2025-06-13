@@ -16,46 +16,52 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class BoardViewModel extends ViewModel {
     private static final String TAG = "BoardViewModel";
+
+    // LiveData cho màn hình Board
     private final MutableLiveData<List<Group>> groups = new MutableLiveData<>();
     private final MutableLiveData<Map<String, List<Task>>> groupTasks = new MutableLiveData<>();
+
+    // LiveData mới cho màn hình Chat Lobby
+    private final MutableLiveData<List<GroupChatInfo>> groupChatInfos = new MutableLiveData<>();
+
     private final MutableLiveData<String> operationStatus = new MutableLiveData<>();
 
     private final FirebaseFirestore db;
     private final FirebaseUser currentUser;
+    private final Map<String, GroupChatInfo> groupChatInfoMap = new ConcurrentHashMap<>();
 
     public BoardViewModel() {
         db = FirebaseFirestore.getInstance();
         currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        loadGroupsAndTasks();
+        loadInitialData();
     }
 
     // --- Getters ---
     public LiveData<List<Group>> getGroups() { return groups; }
     public LiveData<Map<String, List<Task>>> getGroupTasks() { return groupTasks; }
+    public LiveData<List<GroupChatInfo>> getGroupChatInfos() { return groupChatInfos; }
     public LiveData<String> getOperationStatus() { return operationStatus; }
 
-
-    private void loadGroupsAndTasks() {
+    private void loadInitialData() {
         if (currentUser == null) {
             operationStatus.setValue("Lỗi: Người dùng chưa đăng nhập.");
             return;
         }
 
-        // Truy vấn collection Member để lấy các group mà user là thành viên.
         db.collection("Member")
                 .whereEqualTo("user_id", currentUser.getUid())
                 .addSnapshotListener((memberSnapshots, error) -> {
                     if (error != null) {
                         Log.e(TAG, "Error loading member data", error);
-                        operationStatus.setValue("Lỗi tải dữ liệu thành viên.");
                         return;
                     }
                     if (memberSnapshots == null || memberSnapshots.isEmpty()) {
                         groups.setValue(new ArrayList<>());
+                        groupChatInfos.setValue(new ArrayList<>());
                         groupTasks.setValue(new HashMap<>());
                         return;
                     }
@@ -68,56 +74,72 @@ public class BoardViewModel extends ViewModel {
                         }
                     }
 
-                    // Dùng danh sách groupIds để lấy thông tin chi tiết của các group đó.
                     if (!groupIds.isEmpty()) {
-                        fetchGroupsDetails(groupIds);
+                        fetchGroupsAndRelatedData(groupIds);
                     } else {
-                        // Nếu user là thành viên nhưng không có group id hợp lệ.
                         groups.setValue(new ArrayList<>());
+                        groupChatInfos.setValue(new ArrayList<>());
                         groupTasks.setValue(new HashMap<>());
                     }
                 });
     }
 
-    private void fetchGroupsDetails(List<String> groupIds) {
+    private void fetchGroupsAndRelatedData(List<String> groupIds) {
         db.collection("Group").whereIn(FieldPath.documentId(), groupIds)
                 .addSnapshotListener((groupSnapshots, error) -> {
-                    if (error != null) {
-                        Log.e(TAG, "Error fetching group details", error);
-                        return;
-                    }
+                    if (error != null) { return; }
                     if (groupSnapshots == null) return;
 
                     List<Group> fetchedGroups = groupSnapshots.toObjects(Group.class);
                     groups.setValue(fetchedGroups);
-                    fetchAllTasksForGroups(fetchedGroups);
+
+                    groupChatInfoMap.clear();
+                    for (Group group : fetchedGroups) {
+                        groupChatInfoMap.put(group.getGroup_id(), new GroupChatInfo(group));
+                        listenForLastMessage(group.getGroup_id());
+                        listenForTasks(group.getGroup_id()); // Tách logic load task
+                    }
                 });
     }
 
-    private void fetchAllTasksForGroups(List<Group> groupList) {
-        if (groupList.isEmpty()) {
-            groupTasks.postValue(new HashMap<>());
-            return;
-        }
+    private void listenForLastMessage(String groupId) {
+        db.collection("Group").document(groupId).collection("Messages")
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .limit(1)
+                .addSnapshotListener((messageSnapshots, error) -> {
+                    if (error != null) { return; }
 
-        Map<String, List<Task>> allTasksMap = new HashMap<>();
-        AtomicInteger counter = new AtomicInteger(groupList.size());
+                    GroupChatInfo info = groupChatInfoMap.get(groupId);
+                    if (info == null) return;
 
-        for (Group group : groupList) {
-            db.collection("Task")
-                    .whereEqualTo("group_id", group.getGroup_id())
-                    .orderBy("created_at", Query.Direction.ASCENDING)
-                    .addSnapshotListener((taskSnapshots, error) -> {
-                        if (error != null) {
-                            Log.e(TAG, "Error fetching tasks for group " + group.getGroup_id(), error);
-                        } else if (taskSnapshots != null) {
-                            allTasksMap.put(group.getGroup_id(), taskSnapshots.toObjects(Task.class));
-                        }
-                        if (counter.decrementAndGet() == 0) {
-                            groupTasks.postValue(allTasksMap);
-                        }
-                    });
-        }
+                    if (messageSnapshots != null && !messageSnapshots.isEmpty()) {
+                        info.setLastMessage(messageSnapshots.getDocuments().get(0).toObject(ChatMessage.class));
+                    } else {
+                        info.setLastMessage(null);
+                    }
+
+                    updateGroupChatInfosLiveData();
+                });
+    }
+
+    private void listenForTasks(String groupId) {
+        db.collection("Task").whereEqualTo("group_id", groupId)
+                .orderBy("created_at", Query.Direction.ASCENDING)
+                .addSnapshotListener((taskSnapshots, error) -> {
+                    Map<String, List<Task>> currentTasks = groupTasks.getValue() != null ? groupTasks.getValue() : new HashMap<>();
+                    if (error != null) {
+                        Log.e(TAG, "Error listening for tasks", error);
+                        return;
+                    }
+                    if (taskSnapshots != null) {
+                        currentTasks.put(groupId, taskSnapshots.toObjects(Task.class));
+                        groupTasks.postValue(new HashMap<>(currentTasks));
+                    }
+                });
+    }
+
+    private void updateGroupChatInfosLiveData() {
+        groupChatInfos.postValue(new ArrayList<>(groupChatInfoMap.values()));
     }
 
     public void addGroup(String groupName) {

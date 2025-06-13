@@ -10,20 +10,20 @@ import java.util.List;
 
 public class ChatLobbyAdapter extends RecyclerView.Adapter<ChatLobbyAdapter.ViewHolder> {
 
-    private List<Group> groupList;
+    private List<GroupChatInfo> groupChatInfos;
     private final OnGroupClickListener listener;
 
     public interface OnGroupClickListener {
         void onGroupClick(Group group);
     }
 
-    public ChatLobbyAdapter(List<Group> groupList, OnGroupClickListener listener) {
-        this.groupList = groupList;
+    public ChatLobbyAdapter(List<GroupChatInfo> groupChatInfos, OnGroupClickListener listener) {
+        this.groupChatInfos = groupChatInfos;
         this.listener = listener;
     }
 
-    public void updateGroups(List<Group> newGroupList) {
-        this.groupList = newGroupList;
+    public void updateGroupChatInfos(List<GroupChatInfo> newGroupChatInfos) {
+        this.groupChatInfos = newGroupChatInfos;
         notifyDataSetChanged();
     }
 
@@ -36,13 +36,13 @@ public class ChatLobbyAdapter extends RecyclerView.Adapter<ChatLobbyAdapter.View
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Group group = groupList.get(position);
-        holder.bind(group, listener);
+        GroupChatInfo info = groupChatInfos.get(position);
+        holder.bind(info, listener);
     }
 
     @Override
     public int getItemCount() {
-        return groupList.size();
+        return groupChatInfos.size();
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
@@ -55,9 +55,20 @@ public class ChatLobbyAdapter extends RecyclerView.Adapter<ChatLobbyAdapter.View
             tvLastMessage = itemView.findViewById(R.id.tvLastMessage);
         }
 
-        public void bind(final Group group, final OnGroupClickListener listener) {
+        public void bind(final GroupChatInfo info, final OnGroupClickListener listener) {
+            Group group = info.getGroup();
+            ChatMessage lastMessage = info.getLastMessage();
+
             tvGroupName.setText(group.getName());
-            // TODO: Bạn có thể thêm logic để hiển thị tin nhắn cuối cùng ở đây
+
+            if (lastMessage != null) {
+                String displayMessage = (lastMessage.getUsername() != null ? lastMessage.getUsername() : "")
+                        + ": " + lastMessage.getMessage();
+                tvLastMessage.setText(displayMessage);
+            } else {
+                tvLastMessage.setText("Chưa có tin nhắn");
+            }
+
             itemView.setOnClickListener(v -> listener.onGroupClick(group));
         }
     }

@@ -121,11 +121,27 @@ public class GroupChatFragment extends Fragment {
             return;
         }
 
-        String username = currentUser.getDisplayName() != null ? currentUser.getDisplayName() : currentUser.getEmail().split("@")[0];
-        ChatMessage message = new ChatMessage(currentUser.getUid(), username, messageText);
+        // Lấy thông tin user từ collection "User"
+        db.collection("User").document(currentUser.getUid()).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    String username = "Người dùng"; // Tên mặc định
+                    if (documentSnapshot.exists()) {
+                        // Ưu tiên lấy username từ Firestore
+                        username = documentSnapshot.getString("username");
+                    } else {
+                        // Nếu không có, dùng email làm tên tạm
+                        username = currentUser.getEmail() != null ? currentUser.getEmail().split("@")[0] : "Người dùng";
+                    }
 
-        messagesRef.add(message)
-                .addOnSuccessListener(documentReference -> etMessageInput.setText(""))
-                .addOnFailureListener(e -> Toast.makeText(getContext(), "Gửi tin nhắn thất bại.", Toast.LENGTH_SHORT).show());
+                    // Tạo và gửi tin nhắn với username đã lấy được
+                    ChatMessage message = new ChatMessage(currentUser.getUid(), username, messageText);
+                    messagesRef.add(message)
+                            .addOnSuccessListener(documentReference -> etMessageInput.setText(""))
+                            .addOnFailureListener(e -> Toast.makeText(getContext(), "Gửi tin nhắn thất bại.", Toast.LENGTH_SHORT).show());
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Lỗi khi lấy thông tin người dùng.", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Không thể lấy user profile", e);
+                });
     }
 }
