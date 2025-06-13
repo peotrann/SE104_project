@@ -16,8 +16,9 @@
             android:id="@+id/etCardTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@android:drawable/edit_text"
-            android:hint="Title"
+            android:background="@drawable/circle_background"
+            android:backgroundTint="#1683DD"
+            android:hint=" Title"
             android:inputType="text"
             android:paddingBottom="8dp"
             android:textSize="24sp"
@@ -35,7 +36,8 @@
             android:id="@+id/etDescription"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:background="@android:drawable/edit_text"
+            android:background="@drawable/circle_background"
+            android:backgroundTint="@color/surface"
             android:hint="Enter description..."
             android:minLines="3"
             android:padding="8dp" />
@@ -124,6 +126,7 @@
             android:layout_height="60dp"
             android:layout_marginVertical="8dp"
             android:background="@drawable/circle_background"
+            android:backgroundTint="#DBF3D24F"
             android:padding="8dp"
             android:text="Add files" />
 

@@ -2,8 +2,8 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    android:background="@android:color/white">
+    android:background="@drawable/circle_background"
+    android:padding="16dp">
 
     <Button
         android:id="@+id/btnSave"
@@ -13,6 +13,7 @@
         android:layout_alignParentBottom="true"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="50dp"
+        android:background="@drawable/circle_background"
         android:paddingHorizontal="24dp"
         android:text="Lưu" />
 
@@ -26,7 +27,8 @@
         android:layout_marginEnd="20dp"
         android:layout_marginBottom="55dp"
         android:layout_toStartOf="@id/btnSave"
-        android:background="#F44336"
+        android:background="@drawable/circle_background_alternative"
+        android:backgroundTint="@color/error"
         android:text="Hủy"
         android:textColor="#000000" />
 
@@ -46,44 +48,43 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Tiêu đề"
-                android:textStyle="bold"
-                android:textSize="16sp"/>
+                android:textSize="16sp"
+                android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/etCardTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Tiêu đề công việc"
-                android:textSize="20sp"
-                android:textStyle="bold"
+                android:inputType="textCapSentences"
                 android:paddingBottom="8dp"
-                android:inputType="textCapSentences" />
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 android:text="Mô tả"
-                android:textStyle="bold"
                 android:textSize="16sp"
-                android:layout_marginTop="16dp" />
+                android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/etDescription"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:gravity="top"
                 android:hint="Nhập mô tả..."
                 android:minLines="3"
-                android:gravity="top"
-                android:padding="8dp"
-                />
+                android:padding="8dp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 android:text="Thành viên"
-                android:textStyle="bold"
                 android:textSize="16sp"
-                android:layout_marginTop="16dp" />
+                android:textStyle="bold" />
 
             <LinearLayout
                 android:id="@+id/llMembers"
@@ -96,16 +97,16 @@
                 android:id="@+id/btnAddMember"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:visibility="gone"
-                android:text="Thêm thành viên" />
+                android:text="Thêm thành viên"
+                android:visibility="gone" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 android:text="Ngày tạo"
-                android:textStyle="bold"
                 android:textSize="16sp"
-                android:layout_marginTop="16dp" />
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvStartDate"
@@ -114,36 +115,36 @@
                 android:layout_marginTop="4dp"
                 android:padding="8dp"
                 android:text="Đang tải..."
-                android:textSize="16sp"/>
+                android:textSize="16sp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 android:text="Hạn chót"
-                android:textStyle="bold"
                 android:textSize="16sp"
-                android:layout_marginTop="16dp" />
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvEndDate"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:background="?android:attr/selectableItemBackground"
+                android:background="@drawable/circle_background"
                 android:clickable="true"
                 android:focusable="true"
                 android:padding="8dp"
                 android:text="Chưa đặt"
-                android:textSize="16sp"
-                android:textColor="@color/design_default_color_primary"/>
+                android:textColor="@color/design_default_color_primary"
+                android:textSize="16sp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 android:text="Tệp đính kèm"
-                android:textStyle="bold"
                 android:textSize="16sp"
-                android:layout_marginTop="16dp" />
+                android:textStyle="bold" />
 
             <LinearLayout
                 android:id="@+id/llAttachments"
@@ -156,8 +157,8 @@
                 android:id="@+id/btnAddAttachment"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:visibility="gone"
-                android:text="Thêm tệp đính kèm" />
+                android:text="Thêm tệp đính kèm"
+                android:visibility="gone" />
 
         </LinearLayout>
     </ScrollView>
