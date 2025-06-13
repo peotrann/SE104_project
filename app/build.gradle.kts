@@ -51,7 +51,7 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.database)
     implementation(libs.google.firebase.firestore)
-    implementation(libs.firebase.appcheck.playintegrity)
+    implementation(libs.google.firebase.appcheck.playintegrity)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

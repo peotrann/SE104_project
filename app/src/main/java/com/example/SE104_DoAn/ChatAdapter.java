@@ -34,7 +34,9 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         ChatMessage message = chatMessages.get(position);
         holder.tvUsername.setText(message.getUsername());
         holder.tvMessage.setText(message.getMessage());
-        holder.tvTimestamp.setText(dateFormat.format(new Date(message.getTimestamp())));
+        if (message.getTimestamp() != null) {
+            holder.tvTimestamp.setText(dateFormat.format(message.getTimestamp()));
+        }
     }
 
     @Override
