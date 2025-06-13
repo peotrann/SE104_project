@@ -72,7 +72,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         etCardTitle = findViewById(R.id.etCardTitle);
         etDescription = findViewById(R.id.etDescription);
         llMembersContainer = findViewById(R.id.llMembers);
-        llAttachments = findViewById(R.id.llAttachments);
+        // llAttachments = findViewById(R.id.llAttachments);
         tvStartDate = findViewById(R.id.tvStartDate);
         tvEndDate = findViewById(R.id.tvEndDate);
         btnSave = findViewById(R.id.btnSave);
@@ -81,8 +81,8 @@ public class TaskDetailActivity extends AppCompatActivity {
         // Ban đầu, đặt tất cả ở chế độ chỉ đọc
         setEditMode(false);
 
-        findViewById(R.id.btnAddMember).setVisibility(View.GONE);
-        findViewById(R.id.btnAddAttachment).setVisibility(View.GONE);
+        // findViewById(R.id.btnAddMember).setVisibility(View.GONE);
+        // findViewById(R.id.btnAddAttachment).setVisibility(View.GONE);
     }
 
     private void setupClickListeners() {
@@ -103,7 +103,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         etDescription.setText(task.getDescription());
         updateDates();
         updateMembersUI();
-        updateAttachmentsUI();
+        // updateAttachmentsUI();
     }
 
     private void checkUserRole() {
@@ -275,10 +275,12 @@ public class TaskDetailActivity extends AppCompatActivity {
         }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
     }
 
+    /*
     private void updateAttachmentsUI() {
         llAttachments.removeAllViews();
         TextView tvInfo = new TextView(this);
         tvInfo.setText("Chưa có tệp đính kèm.");
         llAttachments.addView(tvInfo);
     }
+     */
 }

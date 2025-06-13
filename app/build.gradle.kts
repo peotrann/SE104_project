@@ -35,7 +35,6 @@ android {
 
 dependencies {
     implementation(libs.appcompat)
-    implementation(libs.material)
     implementation(libs.recyclerview)
     implementation(libs.cardview)
     implementation(libs.navigation.fragment)
@@ -43,6 +42,7 @@ dependencies {
     implementation(libs.lifecycle.viewmodel)
     implementation(libs.lifecycle.livedata)
     implementation(libs.lifecycle.runtime)
+    implementation(libs.material)
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)

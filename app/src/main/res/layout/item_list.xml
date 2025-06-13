@@ -1,52 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="300dp"
     android:layout_height="wrap_content"
-    android:layout_marginTop="60dp"
-    android:layout_marginBottom="16dp"
-    android:background="@drawable/rounded_list_background"
     android:orientation="vertical"
-    android:padding="8dp"
-    android:layout_width="200dp">
+
+    android:layout_marginTop="40dp"
+    android:layout_marginBottom="16dp"
+    android:layout_marginStart="8dp"
+    android:layout_marginEnd="8dp"
+
+    android:padding="12dp"
+    android:background="@drawable/rounded_background"
+    android:elevation="4dp">
 
     <TextView
         android:id="@+id/listTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="4dp"
-        android:text="Task list"
-        android:textColor="@color/white"
+        android:paddingBottom="8dp"
+        android:text="Danh sách task"
+        android:textColor="@color/text_primary"
         android:textSize="18sp"
         android:textStyle="bold" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/cardRecyclerView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="wrap_content" />
 
     <TextView
         android:id="@+id/tvAddCard"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:background="@drawable/circle_background_alternative"
-        android:backgroundTint="#3F3F3F"
-        android:clickable="true"
-        android:focusable="true"
-        android:padding="4dp"
-        android:text="➕ Add Task"
-        android:textColor="#FFFFFF" />
-
-    <TextView
-        android:id="@+id/tvDeleteList"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="❌ Delete group"
-        android:padding="4dp"
-        android:textColor="#FF0000"
-        android:background="?android:attr/selectableItemBackground"
-        android:focusable="true"
-        android:clickable="true"
-        android:visibility="gone"/>
-
+        android:layout_marginTop="8dp"
+        android:padding="8dp"
+        android:text="➕ Thêm Task"
+        android:gravity="center"
+        android:background="?attr/selectableItemBackground"
+        android:textColor="@color/text_secondary" />
 </LinearLayout>

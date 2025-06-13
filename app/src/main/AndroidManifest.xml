@@ -4,13 +4,16 @@
     package="com.example.SE104_DoAn">
     <uses-permission android:name="android.permission.INTERNET" />
 
-<application
-    android:allowBackup="true"
-    android:enableOnBackInvokedCallback="true"
-    android:label="SE104 Do An"
-    android:theme="@style/Theme.AppCompat.Light.NoActionBar"
-    tools:targetApi="33"
-    android:name=".MyApplication">
+    <application
+        android:name=".MyApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SE104_DoAn"  tools:targetApi="33">
     <!-- Đặt LoginActivity là activity khởi động -->
     <activity android:name=".LoginActivity"
         android:exported="true">
