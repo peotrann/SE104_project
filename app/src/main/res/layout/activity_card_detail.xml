@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/board_background"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:orientation="vertical">
+
+        <!-- Tiêu đề thẻ -->
+        <EditText
+            android:id="@+id/etCardTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:drawable/edit_text"
+            android:hint="Title"
+            android:inputType="text"
+            android:paddingBottom="8dp"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <!-- Mô tả -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="8dp"
+            android:text="Description"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/etDescription"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@android:drawable/edit_text"
+            android:hint="Enter description..."
+            android:minLines="3"
+            android:padding="8dp" />
+
+        <!-- Thành viên -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="16dp"
+            android:text="Members"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/llMembers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="8dp" />
+
+        <!-- Ngày bắt đầu -->
+
+        <Button
+            android:id="@+id/btnAddMember"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/circle_background"
+            android:padding="8dp"
+            android:text="Add members" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="4dp"
+            android:text="Start date"
+            android:textStyle="bold" />
+
+        <!-- Ngày kết thúc -->
+        <TextView
+            android:id="@+id/tvStartDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/circle_background"
+            android:clickable="true"
+            android:padding="8dp"
+            android:rotationX="1"
+            android:text="No date selected" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="4dp"
+            android:text="Deadline"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvEndDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/circle_background"
+            android:clickable="true"
+            android:padding="8dp"
+            android:text="No date selected" />
+
+        <!-- Tệp đính kèm -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="4dp"
+            android:text="Attached files"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/llAttachments"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="8dp" />
+
+        <!-- Nút Lưu -->
+
+        <Button
+            android:id="@+id/btnAddAttachment"
+            android:layout_width="142dp"
+            android:layout_height="60dp"
+            android:layout_marginVertical="8dp"
+            android:background="@drawable/circle_background"
+            android:padding="8dp"
+            android:text="Add files" />
+
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/rounded_save_button"
+            android:padding="8dp"
+            android:text="Save" />
+
+    </LinearLayout>
+</ScrollView>
