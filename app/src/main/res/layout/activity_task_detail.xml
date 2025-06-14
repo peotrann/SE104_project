@@ -76,12 +76,13 @@
                         android:layout_marginTop="16dp"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:hint="Mô tả">
+
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etDescription"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:minLines="4"
-                            android:gravity="top"/>
+                            android:gravity="top"
+                            android:minLines="4" />
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

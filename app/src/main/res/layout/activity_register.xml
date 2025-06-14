@@ -65,7 +65,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:background="@drawable/rounded_login_button"
-            android:backgroundTint="#28E5ED"
+            android:backgroundTint="#B830E1E9"
             android:padding="8dp"
             android:text="Register"
             android:textColor="@color/black"

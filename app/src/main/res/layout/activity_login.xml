@@ -69,7 +69,7 @@
             android:focusable="true"
             android:gravity="end"
             android:text="Forgot password?"
-            android:textColor="@color/transparent"
+            android:textColor="@color/design_default_color_on_secondary"
             android:textSize="14sp" />
 
         <TextView
@@ -82,7 +82,7 @@
             android:focusable="true"
             android:gravity="end"
             android:text="Don't have account? Sign up"
-            android:textColor="@color/transparent"
+            android:textColor="@color/design_default_color_on_secondary"
             android:textSize="14sp" />
 
     </LinearLayout>
