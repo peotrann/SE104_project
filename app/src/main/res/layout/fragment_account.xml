@@ -114,20 +114,4 @@
         android:text="Themes"
         android:textSize="14sp" />
 
-    <Button
-        android:id="@+id/btnLogout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:background="#C32E53"
-        android:clickable="true"
-        android:focusable="true"
-        android:fontFamily="sans-serif-black"
-        android:gravity="left"
-        android:paddingHorizontal="12dp"
-        android:paddingVertical="14dp"
-        android:text="Log out"
-        android:textColor="#FFFFFF"
-        android:textSize="14sp" />
-
 </LinearLayout>
