@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.google.firebase.firestore)
     implementation(libs.google.firebase.appcheck.playintegrity)
     implementation(libs.firebase.storage)
+    implementation(libs.google.firebase.storage)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

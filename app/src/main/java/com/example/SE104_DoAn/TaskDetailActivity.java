@@ -2,7 +2,12 @@ package com.example.SE104_DoAn;
 
 import android.app.DatePickerDialog;
 import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,11 +19,15 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -30,42 +39,39 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import android.content.Intent;
-import android.database.Cursor;
-import android.net.Uri;
-import android.provider.OpenableColumns;
-
 public class TaskDetailActivity extends AppCompatActivity {
 
-    private EditText etCardTitle, etDescription;
-    private LinearLayout llMembersContainer;
-    private Button btnSave, btnCancel;
+    private TextInputEditText etCardTitle, etDescription;
+    private LinearLayout llMembersContainer, llAttachments, llSubmissions;
+    private MaterialButton btnSave, btnCancel, btnAddAttachment, btnSubmitWork;
+    private MaterialCardView cardAttachments, cardSubmissions;
     private TextView tvStartDate, tvEndDate;
-
-    private LinearLayout llAttachments; // Thêm llAttachments
-    private MaterialButton btnAddAttachment; // Thêm btnAddAttachment
 
     private Task task;
     private BoardViewModel viewModel;
     private FirebaseFirestore db;
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy, hh:mm a", Locale.getDefault());
-    private boolean isAdmin = false; // Biến cờ để lưu quyền admin
+    private boolean isAdmin = false;
+
     private ActivityResultLauncher<String> filePickerLauncher;
+    private String uploadContext = ""; // Dùng để xác định là "attachment" hay "submission"
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_task_detail);
 
-        // Khởi tạo launcher
+        // Khởi tạo launcher để xử lý kết quả từ trình chọn file
         this.filePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(),
                 uri -> {
                     if (uri != null) {
                         String fileName = getFileName(uri);
-                        viewModel.addFileAttachment(task.getTask_id(), fileName, uri);
+                        if ("attachment".equals(uploadContext)) {
+                            viewModel.addFileAttachment(task.getTask_id(), fileName, uri);
+                        } else if ("submission".equals(uploadContext)) {
+                            viewModel.submitWorkForTask(task.getTask_id(), fileName, uri);
+                        }
                     }
                 });
 
@@ -77,14 +83,17 @@ public class TaskDetailActivity extends AppCompatActivity {
         String taskId = getIntent().getStringExtra("taskId");
 
         if (taskId != null && !taskId.isEmpty()) {
+            // Lắng nghe dữ liệu task chính
             viewModel.getTaskById(taskId).observe(this, updatedTask -> {
                 if (updatedTask != null) {
                     this.task = updatedTask;
                     bindDataToUI();
-                    checkUserRole(); // Mỗi khi task cập nhật, kiểm tra lại vai trò
+                    checkUserRole();
                 }
             });
+            // Bắt đầu lắng nghe dữ liệu cho attachments và submissions
             observeAttachments(taskId);
+            observeSubmissions(taskId);
         } else {
             Toast.makeText(this, "Lỗi: Không tìm thấy ID của task.", Toast.LENGTH_LONG).show();
             finish();
@@ -96,34 +105,42 @@ public class TaskDetailActivity extends AppCompatActivity {
         etDescription = findViewById(R.id.etDescription);
         llMembersContainer = findViewById(R.id.llMembers);
         llAttachments = findViewById(R.id.llAttachments);
+        llSubmissions = findViewById(R.id.llSubmissions);
+        cardAttachments = findViewById(R.id.cardAttachments);
+        cardSubmissions = findViewById(R.id.cardSubmissions);
         btnAddAttachment = findViewById(R.id.btnAddAttachment);
+        btnSubmitWork = findViewById(R.id.btnSubmitWork);
         tvStartDate = findViewById(R.id.tvStartDate);
         tvEndDate = findViewById(R.id.tvEndDate);
         btnSave = findViewById(R.id.btnSave);
         btnCancel = findViewById(R.id.btnCancel);
 
-        // Ban đầu, đặt tất cả ở chế độ chỉ đọc
         setEditMode(false);
-
-        // findViewById(R.id.btnAddMember).setVisibility(View.GONE);
-        // findViewById(R.id.btnAddAttachment).setVisibility(View.GONE);
     }
 
     private void setupClickListeners() {
         btnSave.setOnClickListener(v -> saveTask());
         btnCancel.setOnClickListener(v -> finish());
+
         findViewById(R.id.deadline_container).setOnClickListener(v -> {
-            if (isAdmin) showDatePickerDialog();
-            else Toast.makeText(this, "Bạn không có quyền chỉnh sửa.", Toast.LENGTH_SHORT).show();
+            if (isAdmin) {
+                showDatePickerDialog();
+            } else {
+                Toast.makeText(this, "Bạn không có quyền chỉnh sửa.", Toast.LENGTH_SHORT).show();
+            }
         });
 
-        btnAddAttachment.setOnClickListener(v -> {
-            if (isAdmin) showAddAttachmentDialog();
-            else Toast.makeText(this, "Chỉ admin mới có thể thêm tài liệu.", Toast.LENGTH_SHORT).show();
+        btnAddAttachment.setOnClickListener(v -> showAddAttachmentDialog());
+
+        btnSubmitWork.setOnClickListener(v -> {
+            // Mọi thành viên trong task đều có thể nộp bài
+            uploadContext = "submission";
+            filePickerLauncher.launch("*/*"); // Mở trình chọn file
         });
     }
 
     private void bindDataToUI() {
+        if (task == null) return;
         etCardTitle.setText(task.getTitle());
         etDescription.setText(task.getDescription());
         updateDates();
@@ -131,93 +148,11 @@ public class TaskDetailActivity extends AppCompatActivity {
     }
 
     private void observeAttachments(String taskId) {
-        viewModel.getDocumentsForTask(taskId).observe(this, documents -> {
-            updateAttachmentsUI(documents);
-        });
+        viewModel.getDocumentsForTask(taskId).observe(this, this::updateAttachmentsUI);
     }
 
-    private void updateAttachmentsUI(List<Document> documents) {
-        llAttachments.removeAllViews();
-        if (documents == null || documents.isEmpty()) {
-            TextView tv = new TextView(this);
-            tv.setText("Chưa có tài liệu nào.");
-            llAttachments.addView(tv);
-        } else {
-            for (Document doc : documents) {
-                TextView linkView = new TextView(this);
-                linkView.setText("🔗 " + doc.getName()); // Hiển thị tên file/link
-                linkView.setPadding(0, 8, 0, 8);
-                linkView.setTextColor(getResources().getColor(android.R.color.holo_blue_dark));
-                linkView.setOnClickListener(v -> {
-                    try {
-                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(doc.getFile_url()));
-                        startActivity(browserIntent);
-                    } catch (Exception e) {
-                        Toast.makeText(this, "Không thể mở link.", Toast.LENGTH_SHORT).show();
-                    }
-                });
-                llAttachments.addView(linkView);
-            }
-        }
-    }
-
-    private void showAddAttachmentDialog() {
-        final CharSequence[] options = {"Thêm bằng Link", "Tải lên từ thiết bị", "Hủy"};
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Chọn phương thức");
-        builder.setItems(options, (dialog, item) -> {
-            if (options[item].equals("Thêm bằng Link")) {
-                showAddLinkDialog();
-            } else if (options[item].equals("Tải lên từ thiết bị")) {
-                filePickerLauncher.launch("*/*");
-            } else {
-                dialog.dismiss();
-            }
-        });
-        builder.show();
-    }
-
-    private void showAddLinkDialog() {
-        Context context = this;
-        LinearLayout layout = new LinearLayout(context);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(40, 20, 40, 20);
-        final EditText nameInput = new EditText(context);
-        nameInput.setHint("Tên hiển thị (ví dụ: Tài liệu tham khảo)");
-        layout.addView(nameInput);
-        final EditText urlInput = new EditText(context);
-        urlInput.setHint("Dán đường link (URL) vào đây");
-        layout.addView(urlInput);
-        new AlertDialog.Builder(this)
-                .setTitle("Thêm tài liệu bằng Link")
-                .setView(layout)
-                .setPositiveButton("Thêm", (dialog, which) -> {
-                    String name = nameInput.getText().toString().trim();
-                    String url = urlInput.getText().toString().trim();
-                    if (!name.isEmpty() && !url.isEmpty()) {
-                        viewModel.addLinkAttachment(task.getTask_id(), name, url);
-                    }
-                })
-                .setNegativeButton("Hủy", null)
-                .show();
-    }
-
-    private String getFileName(Uri uri) {
-        String result = null;
-        if (uri.getScheme().equals("content")) {
-            try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
-                if (cursor != null && cursor.moveToFirst()) {
-                    int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-                    if (nameIndex != -1) result = cursor.getString(nameIndex);
-                }
-            }
-        }
-        if (result == null) {
-            result = uri.getPath();
-            int cut = result.lastIndexOf('/');
-            if (cut != -1) result = result.substring(cut + 1);
-        }
-        return result;
+    private void observeSubmissions(String taskId) {
+        viewModel.getSubmissionsForTask(taskId).observe(this, this::updateSubmissionsUI);
     }
 
     private void checkUserRole() {
@@ -231,25 +166,34 @@ public class TaskDetailActivity extends AppCompatActivity {
     private void setEditMode(boolean isEditable) {
         etCardTitle.setEnabled(isEditable);
         etDescription.setEnabled(isEditable);
-        tvEndDate.setClickable(isEditable);
 
-        int visibility = isEditable ? View.VISIBLE : View.GONE;
-        btnSave.setVisibility(visibility);
-        btnCancel.setVisibility(visibility);
+        int adminControlsVisibility = isEditable ? View.VISIBLE : View.GONE;
+        btnSave.setVisibility(adminControlsVisibility);
+        btnCancel.setVisibility(adminControlsVisibility);
+
+        // Chỉ Admin mới thêm Tài liệu đính kèm được
+        btnAddAttachment.setVisibility(adminControlsVisibility);
+        cardAttachments.setVisibility(View.VISIBLE);
+
+        // Khu vực "Bài nộp" luôn hiển thị cho mọi người
+        cardSubmissions.setVisibility(View.VISIBLE);
 
         updateMembersUI();
     }
 
     private void updateMembersUI() {
+        if (llMembersContainer == null) return;
         llMembersContainer.removeAllViews();
-        Button btnManageMembers = new Button(this);
+
+        MaterialButton btnManageMembers = new MaterialButton(this, null, com.google.android.material.R.attr.borderlessButtonStyle);
         int memberCount = (task != null && task.getMembers() != null) ? task.getMembers().size() : 0;
 
-        btnManageMembers.setText("Xem " + memberCount + " thành viên");
+        String buttonText = "Xem " + memberCount + " thành viên";
         if (isAdmin) {
-            btnManageMembers.setText("Xem và quản lý " + memberCount + " thành viên");
+            buttonText = "Xem và quản lý " + memberCount + " thành viên";
         }
-
+        btnManageMembers.setText(buttonText);
+        btnManageMembers.setAllCaps(false);
         btnManageMembers.setOnClickListener(v -> showMemberListDialog());
         llMembersContainer.addView(btnManageMembers);
     }
@@ -268,9 +212,7 @@ public class TaskDetailActivity extends AppCompatActivity {
 
         ScrollView scrollView = new ScrollView(context);
         scrollView.addView(memberListLayout);
-
-        dialogLayout.addView(scrollView, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0f));
+        dialogLayout.addView(scrollView, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0f));
 
         if (isAdmin) {
             Button btnAddNewMember = new Button(context);
@@ -282,7 +224,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         builder.setView(dialogLayout);
         AlertDialog memberDialog = builder.create();
 
-        List<String> memberIds = (task.getMembers() != null) ? task.getMembers() : new ArrayList<>();
+        List<String> memberIds = (task != null && task.getMembers() != null) ? task.getMembers() : new ArrayList<>();
 
         if (memberIds.isEmpty()) {
             TextView tvNoMembers = new TextView(context);
@@ -296,12 +238,6 @@ public class TaskDetailActivity extends AppCompatActivity {
                             User user = document.toObject(User.class);
                             memberListLayout.addView(createMemberViewForDialog(user, document.getId()));
                         }
-                    })
-                    .addOnFailureListener(e -> {
-                        memberListLayout.removeAllViews();
-                        TextView errorView = new TextView(context);
-                        errorView.setText("Lỗi khi tải danh sách thành viên.");
-                        memberListLayout.addView(errorView);
                     });
         }
         memberDialog.show();
@@ -316,7 +252,6 @@ public class TaskDetailActivity extends AppCompatActivity {
         TextView tvMemberName = new TextView(this);
         tvMemberName.setText(user != null ? (user.getUsername() != null ? user.getUsername() : user.getEmail()) : userId);
         tvMemberName.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
-
         memberLayout.addView(tvMemberName);
 
         if (isAdmin) {
@@ -354,10 +289,129 @@ public class TaskDetailActivity extends AppCompatActivity {
                 .show();
     }
 
+    private void updateAttachmentsUI(List<Document> documents) {
+        if (llAttachments == null) return;
+        llAttachments.removeAllViews();
+        if (documents == null || documents.isEmpty()) {
+            TextView tv = new TextView(this);
+            tv.setText("Chưa có tài liệu nào.");
+            llAttachments.addView(tv);
+        } else {
+            for (Document doc : documents) {
+                TextView linkView = new TextView(this);
+                linkView.setText("🔗 " + doc.getName());
+                linkView.setPadding(0, 8, 0, 8);
+                linkView.setTextColor(getResources().getColor(android.R.color.holo_blue_dark));
+                linkView.setOnClickListener(v -> {
+                    try {
+                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(doc.getFile_url()));
+                        startActivity(browserIntent);
+                    } catch (Exception e) {
+                        Toast.makeText(this, "Không thể mở link.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+                llAttachments.addView(linkView);
+            }
+        }
+    }
+
+    private void updateSubmissionsUI(List<Submission> submissions) {
+        if (llSubmissions == null) return;
+        llSubmissions.removeAllViews();
+        if (submissions == null || submissions.isEmpty()) {
+            TextView tv = new TextView(this);
+            tv.setText("Chưa có bài nộp nào.");
+            llSubmissions.addView(tv);
+        } else {
+            for (Submission submission : submissions) {
+                TextView submissionView = new TextView(this);
+                String uploader = submission.getSubmittedBy() != null ? submission.getSubmittedBy().substring(0, 5) : "Không rõ";
+                submissionView.setText("📄 " + submission.getFileName() + " (bởi " + uploader + "...)");
+                submissionView.setPadding(0, 8, 0, 8);
+                submissionView.setTextColor(getResources().getColor(android.R.color.holo_blue_dark));
+                submissionView.setOnClickListener(v -> {
+                    try {
+                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(submission.getFileUrl()));
+                        startActivity(browserIntent);
+                    } catch (Exception e) {
+                        Toast.makeText(this, "Không thể mở link.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+                llSubmissions.addView(submissionView);
+            }
+        }
+    }
+
+    private void showAddAttachmentDialog() {
+        final CharSequence[] options = {"Thêm bằng Link", "Tải lên từ thiết bị", "Hủy"};
+        new AlertDialog.Builder(this)
+                .setTitle("Chọn phương thức thêm tài liệu")
+                .setItems(options, (dialog, item) -> {
+                    if (options[item].equals("Thêm bằng Link")) {
+                        showAddLinkDialog();
+                    } else if (options[item].equals("Tải lên từ thiết bị")) {
+                        uploadContext = "attachment";
+                        filePickerLauncher.launch("*/*");
+                    } else {
+                        dialog.dismiss();
+                    }
+                })
+                .show();
+    }
+
+    private void showAddLinkDialog() {
+        Context context = this;
+        LinearLayout layout = new LinearLayout(context);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(50, 30, 50, 30);
+        final EditText nameInput = new EditText(context);
+        nameInput.setHint("Tên hiển thị (ví dụ: Tài liệu tham khảo)");
+        layout.addView(nameInput);
+        final EditText urlInput = new EditText(context);
+        urlInput.setHint("Dán đường link (URL) vào đây");
+        layout.addView(urlInput);
+        new AlertDialog.Builder(this)
+                .setTitle("Thêm tài liệu bằng Link")
+                .setView(layout)
+                .setPositiveButton("Thêm", (dialog, which) -> {
+                    String name = nameInput.getText().toString().trim();
+                    String url = urlInput.getText().toString().trim();
+                    if (!name.isEmpty() && !url.isEmpty()) {
+                        viewModel.addLinkAttachment(task.getTask_id(), name, url);
+                    }
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
+    }
+
+    private String getFileName(Uri uri) {
+        String result = null;
+        if (uri.getScheme() != null && uri.getScheme().equals("content")) {
+            try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (nameIndex != -1) {
+                        result = cursor.getString(nameIndex);
+                    }
+                }
+            }
+        }
+        if (result == null) {
+            result = uri.getPath();
+            if (result != null) {
+                int cut = result.lastIndexOf('/');
+                if (cut != -1) {
+                    result = result.substring(cut + 1);
+                }
+            }
+        }
+        return result != null ? result : "unknown_file";
+    }
+
     private void saveTask() {
         if (task != null) {
-            task.setTitle(etCardTitle.getText().toString().trim());
-            task.setDescription(etDescription.getText().toString().trim());
+            task.setTitle(String.valueOf(etCardTitle.getText()));
+            task.setDescription(String.valueOf(etDescription.getText()));
             viewModel.updateTask(task);
             Toast.makeText(this, "Đã lưu thay đổi", Toast.LENGTH_SHORT).show();
             finish();
@@ -378,7 +432,7 @@ public class TaskDetailActivity extends AppCompatActivity {
     }
 
     private void showDatePickerDialog() {
-        Calendar calendar = Calendar.getInstance();
+        final Calendar calendar = Calendar.getInstance();
         if (task.getDeadline() != null) {
             calendar.setTime(task.getDeadline());
         }
@@ -388,13 +442,4 @@ public class TaskDetailActivity extends AppCompatActivity {
             updateDates();
         }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
     }
-
-    /*
-    private void updateAttachmentsUI() {
-        llAttachments.removeAllViews();
-        TextView tvInfo = new TextView(this);
-        tvInfo.setText("Chưa có tệp đính kèm.");
-        llAttachments.addView(tvInfo);
-    }
-     */
 }

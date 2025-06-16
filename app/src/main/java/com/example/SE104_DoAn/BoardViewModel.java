@@ -369,4 +369,40 @@ public class BoardViewModel extends ViewModel {
         }
         return extension.toLowerCase();
     }
+
+    public LiveData<List<Submission>> getSubmissionsForTask(String taskId) {
+        MutableLiveData<List<Submission>> submissionsData = new MutableLiveData<>();
+        db.collection("Task").document(taskId).collection("Submissions")
+                .orderBy("submittedAt", Query.Direction.DESCENDING)
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null) { return; }
+                    if (snapshots != null) {
+                        submissionsData.setValue(snapshots.toObjects(Submission.class));
+                    }
+                });
+        return submissionsData;
+    }
+
+    /**
+     * Xử lý việc thành viên nộp bài.
+     */
+    public void submitWorkForTask(String taskId, String fileName, Uri fileUri) {
+        if (currentUser == null || taskId == null || fileUri == null) return;
+
+        operationStatus.setValue("Đang nộp bài...");
+        // Lưu bài nộp vào một thư mục riêng trên Storage
+        StorageReference fileRef = storage.getReference().child("submissions/" + taskId + "/" + currentUser.getUid() + "/" + fileName);
+
+        fileRef.putFile(fileUri)
+                .addOnSuccessListener(taskSnapshot -> {
+                    fileRef.getDownloadUrl().addOnSuccessListener(downloadUrl -> {
+                        Submission submission = new Submission(fileName, downloadUrl.toString(), currentUser.getUid());
+                        db.collection("Task").document(taskId).collection("Submissions")
+                                .add(submission)
+                                .addOnSuccessListener(docRef -> operationStatus.setValue("Nộp bài thành công."))
+                                .addOnFailureListener(e -> operationStatus.setValue("Lỗi khi lưu thông tin bài nộp."));
+                    });
+                })
+                .addOnFailureListener(e -> operationStatus.setValue("Nộp bài thất bại."));
+    }
 }
