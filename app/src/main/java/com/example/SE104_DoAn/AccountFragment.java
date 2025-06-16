@@ -30,7 +30,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 public class AccountFragment extends Fragment {
 
     private TextView tvAccountName, tvAccountEmail;
-    private Button btnLogout;
+
     private SharedPreferences sharedPreferences;
 
     private FirebaseAuth mAuth;
@@ -54,7 +54,6 @@ public class AccountFragment extends Fragment {
 
         tvAccountName = view.findViewById(R.id.tvAccountName);
         tvAccountEmail = view.findViewById(R.id.tvAccountEmail);
-        btnLogout = view.findViewById(R.id.btnLogout);
         ImageButton btnAccountMenu = view.findViewById(R.id.btnAccountMenu);
 
         loadAndListenUserProfile();
@@ -62,7 +61,6 @@ public class AccountFragment extends Fragment {
         // THÊM SỰ KIỆN CLICK VÀO TÊN ĐỂ CHỈNH SỬA
         tvAccountName.setOnClickListener(v -> showEditUsernameDialog());
 
-        btnLogout.setOnClickListener(v -> logoutUser());
 
         // Listener cho menu
         btnAccountMenu.setOnClickListener(v -> {
@@ -84,8 +82,6 @@ public class AccountFragment extends Fragment {
             popupMenu.show();
         });
 
-        // Xử lý đăng xuất (giữ nguyên)
-        btnLogout.setOnClickListener(v -> logoutUser());
 
         return view;
     }

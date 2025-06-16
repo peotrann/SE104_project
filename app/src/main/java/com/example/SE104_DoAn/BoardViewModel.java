@@ -17,6 +17,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import android.net.Uri;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 public class BoardViewModel extends ViewModel {
     private static final String TAG = "BoardViewModel";
@@ -31,12 +34,14 @@ public class BoardViewModel extends ViewModel {
     private final MutableLiveData<String> operationStatus = new MutableLiveData<>();
 
     private final FirebaseFirestore db;
+    private final FirebaseStorage storage; // Thêm biến cho Storage
     private final FirebaseUser currentUser;
     private final Map<String, GroupChatInfo> groupChatInfoMap = new ConcurrentHashMap<>();
 
     public BoardViewModel() {
         db = FirebaseFirestore.getInstance();
         currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        storage = FirebaseStorage.getInstance();
         loadInitialData();
     }
 
@@ -302,5 +307,66 @@ public class BoardViewModel extends ViewModel {
                     }
                 });
         return userRole;
+    }
+
+    public LiveData<List<Document>> getDocumentsForTask(String taskId) {
+        MutableLiveData<List<Document>> documentsData = new MutableLiveData<>();
+        db.collection("Task").document(taskId).collection("Documents")
+                .orderBy("created_at", Query.Direction.DESCENDING)
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null) {
+                        Log.e(TAG, "Lỗi khi nghe tài liệu", error);
+                        return;
+                    }
+                    if (snapshots != null) {
+                        documentsData.setValue(snapshots.toObjects(Document.class));
+                    }
+                });
+        return documentsData;
+    }
+
+    public void addLinkAttachment(String taskId, String linkName, String linkUrl) {
+        if (currentUser == null || taskId == null) return;
+        Document newDoc = new Document(linkName, linkUrl, "link", currentUser.getUid());
+        db.collection("Task").document(taskId).collection("Documents")
+                .add(newDoc)
+                .addOnSuccessListener(docRef -> operationStatus.setValue("Thêm link thành công."))
+                .addOnFailureListener(e -> operationStatus.setValue("Lỗi khi thêm link."));
+    }
+
+    public void addFileAttachment(String taskId, String fileName, Uri fileUri) {
+        if (currentUser == null || taskId == null || fileUri == null) {
+            operationStatus.setValue("Dữ liệu không hợp lệ.");
+            return;
+        }
+
+        operationStatus.setValue("Đang tải lên file...");
+        StorageReference fileRef = storage.getReference().child("attachments/" + taskId + "/" + fileName);
+
+        fileRef.putFile(fileUri)
+                .addOnSuccessListener(taskSnapshot -> {
+                    fileRef.getDownloadUrl().addOnSuccessListener(downloadUrl -> {
+                        String fileType = getFileTypeFromFileName(fileName);
+                        Document newDoc = new Document(fileName, downloadUrl.toString(), fileType, currentUser.getUid());
+                        db.collection("Task").document(taskId).collection("Documents")
+                                .add(newDoc)
+                                .addOnSuccessListener(docRef -> operationStatus.setValue("Thêm tài liệu thành công."))
+                                .addOnFailureListener(e -> operationStatus.setValue("Lỗi khi lưu thông tin tài liệu."));
+                    });
+                })
+                .addOnFailureListener(e -> operationStatus.setValue("Tải file lên thất bại."))
+                .addOnProgressListener(snapshot -> {
+                    double progress = (100.0 * snapshot.getBytesTransferred()) / snapshot.getTotalByteCount();
+                    operationStatus.postValue("Đang tải lên... " + (int) progress + "%");
+                });
+    }
+
+    private String getFileTypeFromFileName(String fileName) {
+        String extension = "";
+        int i = fileName.lastIndexOf('.');
+        if (i > 0) {
+            extension = fileName.substring(i+1);
+        }
+        return extension.toLowerCase();
     }
 }
