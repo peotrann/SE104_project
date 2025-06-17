@@ -17,25 +17,53 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
 
     private List<ChatMessage> chatMessages;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
-
-    public ChatAdapter(List<ChatMessage> chatMessages) {
+    private String currentUserId;
+    private static final int VIEW_TYPE_SENT = 1;
+    private static final int VIEW_TYPE_RECEIVED = 2;
+    public ChatAdapter(List<ChatMessage> chatMessages, String currentUserId) {
         this.chatMessages = chatMessages;
+        this.currentUserId = currentUserId; //
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        ChatMessage message = chatMessages.get(position);
+        // So sánh ID người gửi tin nhắn với ID người dùng hiện tại
+        if (message.getUserId() != null && message.getUserId().equals(currentUserId)) {
+            return VIEW_TYPE_SENT;
+        } else {
+            return VIEW_TYPE_RECEIVED;
+        }
     }
 
     @NonNull
     @Override
     public ChatViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_chat_message, parent, false);
+        View view;
+        if (viewType == VIEW_TYPE_SENT) {
+            view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_chat_message_sent, parent, false);
+        } else {
+            view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_chat_message_received, parent, false);
+        }
         return new ChatViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
         ChatMessage message = chatMessages.get(position);
-        holder.tvUsername.setText(message.getUsername());
+
+        if (getItemViewType(position) == VIEW_TYPE_RECEIVED) {
+            holder.tvUsername.setText(message.getUsername());
+            holder.tvUsername.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvUsername.setVisibility(View.GONE);
+        }
+
         holder.tvMessage.setText(message.getMessage());
         if (message.getTimestamp() != null) {
             holder.tvTimestamp.setText(dateFormat.format(message.getTimestamp()));
+        } else {
+            holder.tvTimestamp.setText("");
         }
     }
 

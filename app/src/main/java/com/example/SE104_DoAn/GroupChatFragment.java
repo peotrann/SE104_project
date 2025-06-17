@@ -5,9 +5,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.EditText;
 import android.widget.Toast;
+import androidx.appcompat.widget.Toolbar;
+import android.view.MenuItem;
+import androidx.navigation.fragment.NavHostFragment;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -31,7 +34,7 @@ public class GroupChatFragment extends Fragment {
 
     private RecyclerView rvChatMessages;
     private EditText etMessageInput;
-    private Button btnSendMessage;
+    private ImageButton btnSendMessage;
 
     private ChatAdapter chatAdapter;
     private List<ChatMessage> chatMessages;
@@ -50,6 +53,7 @@ public class GroupChatFragment extends Fragment {
             groupId = getArguments().getString("GROUP_ID");
             groupName = getArguments().getString("GROUP_NAME");
         }
+        setHasOptionsMenu(true);
     }
 
     @Nullable
@@ -62,13 +66,16 @@ public class GroupChatFragment extends Fragment {
             return view;
         }
 
-        // SỬA LỖI: Xóa hoặc comment out dòng code gây crash.
-        // Dòng này sẽ gây lỗi nếu theme của bạn là NoActionBar.
-        /*
+        Toolbar toolbar = view.findViewById(R.id.toolbar_group_chat);
         if (getActivity() instanceof AppCompatActivity) {
-            ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(groupName);
+            AppCompatActivity activity = (AppCompatActivity) getActivity();
+            activity.setSupportActionBar(toolbar); // Đặt toolbar này làm action bar chính
+            if (activity.getSupportActionBar() != null) {
+                activity.getSupportActionBar().setTitle(groupName); // Đặt tên nhóm làm tiêu đề
+                activity.getSupportActionBar().setDisplayHomeAsUpEnabled(true); // Hiển thị nút back (<-)
+                activity.getSupportActionBar().setDisplayShowHomeEnabled(true);
+            }
         }
-        */
 
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
@@ -86,9 +93,25 @@ public class GroupChatFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        // Kiểm tra xem có phải nút "Home" (nút back trên toolbar) được nhấn không
+        if (item.getItemId() == android.R.id.home) {
+            // Sử dụng NavController để quay lại màn hình trước đó
+            NavHostFragment.findNavController(this).navigateUp();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     private void setupRecyclerView() {
         chatMessages = new ArrayList<>();
-        chatAdapter = new ChatAdapter(chatMessages);
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        String currentUserId = (currentUser != null) ? currentUser.getUid() : "";
+
+        // Truyền ID người dùng vào adapter
+        chatAdapter = new ChatAdapter(chatMessages, currentUserId);
+
         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
         layoutManager.setStackFromEnd(true);
         rvChatMessages.setLayoutManager(layoutManager);
