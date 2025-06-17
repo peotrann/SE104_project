@@ -28,6 +28,8 @@ import androidx.lifecycle.ViewModelProvider;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -54,14 +56,13 @@ public class TaskDetailActivity extends AppCompatActivity {
     private boolean isAdmin = false;
 
     private ActivityResultLauncher<String> filePickerLauncher;
-    private String uploadContext = ""; // Dùng để xác định là "attachment" hay "submission"
+    private String uploadContext = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_task_detail);
 
-        // Khởi tạo launcher để xử lý kết quả từ trình chọn file
         this.filePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(),
                 uri -> {
@@ -83,7 +84,6 @@ public class TaskDetailActivity extends AppCompatActivity {
         String taskId = getIntent().getStringExtra("taskId");
 
         if (taskId != null && !taskId.isEmpty()) {
-            // Lắng nghe dữ liệu task chính
             viewModel.getTaskById(taskId).observe(this, updatedTask -> {
                 if (updatedTask != null) {
                     this.task = updatedTask;
@@ -91,7 +91,6 @@ public class TaskDetailActivity extends AppCompatActivity {
                     checkUserRole();
                 }
             });
-            // Bắt đầu lắng nghe dữ liệu cho attachments và submissions
             observeAttachments(taskId);
             observeSubmissions(taskId);
         } else {
@@ -114,7 +113,6 @@ public class TaskDetailActivity extends AppCompatActivity {
         tvEndDate = findViewById(R.id.tvEndDate);
         btnSave = findViewById(R.id.btnSave);
         btnCancel = findViewById(R.id.btnCancel);
-
         setEditMode(false);
     }
 
@@ -298,47 +296,90 @@ public class TaskDetailActivity extends AppCompatActivity {
             llAttachments.addView(tv);
         } else {
             for (Document doc : documents) {
-                TextView linkView = new TextView(this);
-                linkView.setText("🔗 " + doc.getName());
-                linkView.setPadding(0, 8, 0, 8);
-                linkView.setTextColor(getResources().getColor(android.R.color.holo_blue_dark));
-                linkView.setOnClickListener(v -> {
-                    try {
-                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(doc.getFile_url()));
-                        startActivity(browserIntent);
-                    } catch (Exception e) {
-                        Toast.makeText(this, "Không thể mở link.", Toast.LENGTH_SHORT).show();
-                    }
-                });
-                llAttachments.addView(linkView);
+                llAttachments.addView(createAttachmentView(doc));
             }
         }
+    }
+
+    private View createAttachmentView(Document doc) {
+        LinearLayout itemLayout = new LinearLayout(this);
+        itemLayout.setOrientation(LinearLayout.HORIZONTAL);
+        itemLayout.setGravity(Gravity.CENTER_VERTICAL);
+        itemLayout.setPadding(0, 8, 0, 8);
+
+        TextView linkView = new TextView(this);
+        linkView.setText("🔗 " + doc.getName());
+        linkView.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
+        linkView.setTextColor(getResources().getColor(android.R.color.holo_blue_dark));
+        linkView.setOnClickListener(v -> openUrl(doc.getFile_url()));
+        itemLayout.addView(linkView);
+
+        // Chỉ admin mới thấy nút xóa tài liệu đính kèm
+        if (isAdmin) {
+            ImageButton btnDelete = new ImageButton(this);
+            btnDelete.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
+            btnDelete.setBackground(null);
+            btnDelete.setOnClickListener(v -> showDeleteConfirmationDialog("tài liệu", doc.getName(), () -> viewModel.deleteAttachment(task.getTask_id(), doc)));
+            itemLayout.addView(btnDelete);
+        }
+        return itemLayout;
     }
 
     private void updateSubmissionsUI(List<Submission> submissions) {
         if (llSubmissions == null) return;
         llSubmissions.removeAllViews();
+
         if (submissions == null || submissions.isEmpty()) {
             TextView tv = new TextView(this);
             tv.setText("Chưa có bài nộp nào.");
             llSubmissions.addView(tv);
         } else {
             for (Submission submission : submissions) {
-                TextView submissionView = new TextView(this);
-                String uploader = submission.getSubmittedBy() != null ? submission.getSubmittedBy().substring(0, 5) : "Không rõ";
-                submissionView.setText("📄 " + submission.getFileName() + " (bởi " + uploader + "...)");
-                submissionView.setPadding(0, 8, 0, 8);
-                submissionView.setTextColor(getResources().getColor(android.R.color.holo_blue_dark));
-                submissionView.setOnClickListener(v -> {
-                    try {
-                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(submission.getFileUrl()));
-                        startActivity(browserIntent);
-                    } catch (Exception e) {
-                        Toast.makeText(this, "Không thể mở link.", Toast.LENGTH_SHORT).show();
-                    }
-                });
-                llSubmissions.addView(submissionView);
+                llSubmissions.addView(createSubmissionView(submission));
             }
+        }
+    }
+
+    private View createSubmissionView(Submission submission) {
+        LinearLayout itemLayout = new LinearLayout(this);
+        itemLayout.setOrientation(LinearLayout.HORIZONTAL);
+        itemLayout.setGravity(Gravity.CENTER_VERTICAL);
+        itemLayout.setPadding(0, 8, 0, 8);
+
+        TextView submissionView = new TextView(this);
+        String uploaderId = submission.getSubmittedBy() != null ? submission.getSubmittedBy() : "";
+        submissionView.setText("📄 " + submission.getFileName()); // Sẽ cập nhật tên user sau
+        submissionView.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
+        submissionView.setOnClickListener(v -> openUrl(submission.getFileUrl()));
+        itemLayout.addView(submissionView);
+
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        // Hiển thị nút xóa nếu là admin HOẶC là người đã nộp bài
+        if (currentUser != null && (isAdmin || currentUser.getUid().equals(uploaderId))) {
+            ImageButton btnDelete = new ImageButton(this);
+            btnDelete.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
+            btnDelete.setBackground(null);
+            btnDelete.setOnClickListener(v -> showDeleteConfirmationDialog("bài nộp", submission.getFileName(), () -> viewModel.deleteSubmission(task.getTask_id(), submission)));
+            itemLayout.addView(btnDelete);
+        }
+        return itemLayout;
+    }
+
+    private void showDeleteConfirmationDialog(String itemType, String itemName, Runnable onConfirm) {
+        new AlertDialog.Builder(this)
+                .setTitle("Xác nhận xóa")
+                .setMessage("Bạn có chắc muốn xóa " + itemType + " '" + itemName + "'?")
+                .setPositiveButton("Xóa", (dialog, which) -> onConfirm.run())
+                .setNegativeButton("Hủy", null)
+                .show();
+    }
+
+    private void openUrl(String url) {
+        try {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            startActivity(browserIntent);
+        } catch (Exception e) {
+            Toast.makeText(this, "Không thể mở link.", Toast.LENGTH_SHORT).show();
         }
     }
 

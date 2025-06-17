@@ -405,4 +405,40 @@ public class BoardViewModel extends ViewModel {
                 })
                 .addOnFailureListener(e -> operationStatus.setValue("Nộp bài thất bại."));
     }
+
+    public void deleteAttachment(String taskId, Document document) {
+        if (document == null || document.getFile_url() == null || document.getId() == null) return;
+
+        // Lấy tham chiếu đến file trên Storage từ URL
+        StorageReference fileRef = storage.getReferenceFromUrl(document.getFile_url());
+
+        fileRef.delete().addOnSuccessListener(aVoid -> {
+            // Xóa file trên Storage thành công, giờ xóa document trên Firestore
+            db.collection("Task").document(taskId).collection("Documents")
+                    .document(document.getId())
+                    .delete()
+                    .addOnSuccessListener(aVoid2 -> operationStatus.setValue("Xóa tài liệu thành công."))
+                    .addOnFailureListener(e -> operationStatus.setValue("Lỗi khi xóa thông tin tài liệu."));
+        }).addOnFailureListener(e -> {
+            operationStatus.setValue("Lỗi khi xóa file trên Storage.");
+            Log.e(TAG, "Could not delete file from Storage", e);
+        });
+    }
+
+    public void deleteSubmission(String taskId, Submission submission) {
+        if (submission == null || submission.getFileUrl() == null || submission.getId() == null) return;
+
+        StorageReference fileRef = storage.getReferenceFromUrl(submission.getFileUrl());
+
+        fileRef.delete().addOnSuccessListener(aVoid -> {
+            db.collection("Task").document(taskId).collection("Submissions")
+                    .document(submission.getId())
+                    .delete()
+                    .addOnSuccessListener(aVoid2 -> operationStatus.setValue("Xóa bài nộp thành công."))
+                    .addOnFailureListener(e -> operationStatus.setValue("Lỗi khi xóa thông tin bài nộp."));
+        }).addOnFailureListener(e -> {
+            operationStatus.setValue("Lỗi khi xóa file bài nộp.");
+            Log.e(TAG, "Could not delete submission file from Storage", e);
+        });
+    }
 }

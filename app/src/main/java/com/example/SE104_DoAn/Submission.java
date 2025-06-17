@@ -2,11 +2,13 @@ package com.example.SE104_DoAn;
 
 import com.google.firebase.firestore.ServerTimestamp;
 import java.util.Date;
+import com.google.firebase.firestore.DocumentId;
 
 public class Submission {
     private String fileName;
     private String fileUrl;
     private String submittedBy; // user_id của người nộp
+    private String id;
     @ServerTimestamp
     private Date submittedAt;
 
@@ -27,4 +29,6 @@ public class Submission {
     public void setSubmittedBy(String submittedBy) { this.submittedBy = submittedBy; }
     public Date getSubmittedAt() { return submittedAt; }
     public void setSubmittedAt(Date submittedAt) { this.submittedAt = submittedAt; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 }
