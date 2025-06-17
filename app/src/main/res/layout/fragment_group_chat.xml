@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:layout_marginTop="25dp"
-        android:background="?attr/colorPrimary"
+        android:background="#3F51B5"
         android:elevation="4dp"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
@@ -22,7 +22,7 @@
         android:layout_height="match_parent"
         android:layout_above="@+id/layout_chatbox"
         android:layout_below="@id/toolbar_group_chat"
-        android:background="@drawable/board_background"
+        android:background="#D3D3D3"
         android:padding="8dp" />
 
     <LinearLayout
@@ -51,7 +51,7 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="@drawable/circle_background"
-            android:backgroundTint="#ADBDEB"
+            android:backgroundTint="#0078FF"
             android:elevation="4dp"
             android:src="@android:drawable/ic_menu_send"
             android:tint="@android:color/white" />
