@@ -5,13 +5,10 @@
         <item name="colorOnPrimary">@color/white</item>
         <item name="colorPrimaryContainer">@color/primary_light</item>
         <item name="colorOnPrimaryContainer">@color/primary_dark</item>
-
         <item name="colorSecondary">@color/accent</item>
         <item name="colorOnSecondary">@color/black</item>
-
         <item name="android:statusBarColor">?attr/colorPrimary</item>
     </style>
-
     <style name="Theme.SE104_DoAn" parent="Base.Theme.SE104_DoAn" />
 
 </resources>

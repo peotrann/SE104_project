@@ -1,9 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#E0DDDD"
+    android:background="#D0D0D0"
     android:orientation="vertical"
     android:padding="16dp">
 
@@ -12,18 +11,20 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="30dp"
-        android:background="@drawable/circle_background"
+        android:background="#FFFFFF"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="8dp">
+        android:padding="8dp"
+        android:elevation="2dp">
 
-        <!-- Avatar (giả lập bằng hình tròn) -->
+        <!-- Avatar -->
         <ImageView
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:background="@drawable/circle_background"
+            android:background="#FFFFFF"
             android:scaleType="centerInside"
-            android:src="@android:drawable/ic_menu_myplaces" />
+            android:src="@android:drawable/ic_menu_myplaces"
+            android:padding="4dp" />
 
         <!-- Tên và email -->
         <LinearLayout
@@ -47,19 +48,19 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="email@example.com"
-                android:textColor="@color/black"
+                android:textColor="@color/primary_dark"
                 android:textSize="14sp" />
         </LinearLayout>
 
-        <!-- Nút 3 chấm (Option Menu) -->
+        <!-- Nút 3 chấm -->
         <ImageButton
             android:id="@+id/btnAccountMenu"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/circle_background"
-            android:backgroundTint="#434364"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="#666666"
             android:contentDescription="Menu tùy chọn"
-            android:src="@android:drawable/ic_menu_more" />
+            android:src="@android:drawable/ic_menu_more"
+            android:padding="6dp" />
     </LinearLayout>
 
     <!-- Dòng phân cách -->
@@ -68,9 +69,9 @@
         android:layout_height="1dp"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
-        android:background="#E0E0E0" />
+        android:background="#AF000000" />
 
-    <!-- Phần Cài đặt -->
+    <!-- Tiêu đề -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -82,36 +83,28 @@
         android:textSize="16sp"
         android:textStyle="bold" />
 
-    <!-- Các mục cài đặt (giả lập) -->
-
-    <Button
-        android:layout_width="382dp"
-        android:layout_height="53dp"
-        android:allowUndo="false"
-        android:background="@drawable/circle_background"
-        android:backgroundTint="#00BCD4"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="left"
-        android:paddingHorizontal="12dp"
-        android:paddingVertical="14dp"
-        android:text="Languages"
-        android:textSize="14sp"
-        android:visibility="visible"
-        tools:visibility="visible" />
-
+    <!-- Nút Languages -->
     <Button
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:background="#9C27B0"
+        android:text="Languages"
+        android:textSize="14sp"
+        android:textColor="#FFFFFF"
+        android:gravity="start|center_vertical"
+        android:paddingStart="16dp" />
+
+    <!-- Nút Themes -->
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
         android:layout_marginTop="10dp"
-        android:background="@drawable/circle_background"
-        android:backgroundTint="#00BCD4"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="left"
-        android:paddingHorizontal="12dp"
-        android:paddingVertical="14dp"
+        android:background="#9C27B0"
         android:text="Themes"
-        android:textSize="14sp" />
+        android:textSize="14sp"
+        android:textColor="#FFFFFF"
+        android:gravity="start|center_vertical"
+        android:paddingStart="16dp" />
 
 </LinearLayout>

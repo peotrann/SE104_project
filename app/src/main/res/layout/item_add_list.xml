@@ -13,8 +13,8 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="5dp"
         android:layout_marginTop="60dp"
-        android:background="@drawable/rounded_add_button"
-        android:text="➕ Thêm nhóm"
+        android:background="@drawable/bg_edittext_chat"
+        android:text="THÊM NHÓM"
         android:textColor="#FFFFFF"
         tools:ignore="HardcodedText" />
 
